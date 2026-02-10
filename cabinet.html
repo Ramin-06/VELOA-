@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VELO AI | Kabinet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --navy: #0A192F; --gold: #C5A059; --ivory: #FFFFF0; --white: #FFFFFF;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            padding: 30px;
+            border-radius: 28px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.8s ease;
+            position: relative;
+        }
+
+        .auth-card.login-mode { background-color: var(--navy); color: white; }
+        .auth-card.register-mode { background-color: var(--ivory); color: var(--navy); }
+
+        .mode-switcher { display: flex; justify-content: center; margin-bottom: 25px; }
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.1); border: 1px solid var(--gold);
+            color: var(--gold); padding: 8px 20px; border-radius: 50px;
+            cursor: pointer; font-weight: 700; font-size: 13px; transition: 0.3s;
+        }
+
+        .register-mode .toggle-btn {
+            background: rgba(10, 25, 47, 0.05); border-color: var(--navy); color: var(--navy);
+        }
+
+        h2 { margin: 0 0 25px 0; font-size: 26px; font-weight: 800; text-align: center; }
+        .input-group { margin-bottom: 16px; }
+        label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; opacity: 0.8; }
+        
+        input {
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1);
+            background: white; font-family: inherit; box-sizing: border-box; outline: none; transition: 0.3s; font-size: 16px;
+        }
+
+        .login-mode input { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: white; }
+        input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2); }
+
+        .btn-submit {
+            width: 100%; padding: 16px; border: none; border-radius: 12px; font-weight: 800;
+            cursor: pointer; margin-top: 15px; transition: 0.3s; font-size: 16px;
+        }
+
+        .login-mode .btn-submit { background: var(--gold); color: var(--navy); }
+        .register-mode .btn-submit { background: var(--navy); color: white; }
+
+        .back-link { display: block; text-align: center; margin-top: 25px; font-size: 13px; text-decoration: none; color: inherit; opacity: 0.6; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-card" class="auth-card login-mode">
+        <div class="mode-switcher">
+            <button id="mode-toggle" class="toggle-btn" onclick="toggleMode()">Hesab yarat</button>
+        </div>
+
+        <h2 id="form-title">Giriş</h2>
+        
+        <form id="auth-form" onsubmit="handleSubmit(event)">
+            <div id="name-field" class="input-group hidden">
+                <label>Ad və Soyad</label>
+                <input type="text" id="name-input" placeholder="Məs: Ramin">
+            </div>
+
+            <div class="input-group">
+                <label>Nickname</label>
+                <input type="text" id="nick-input" placeholder="istifadəçi adı" required>
+            </div>
+
+            <div id="email-field" class="input-group hidden">
+                <label>Email Ünvanı</label>
+                <input type="email" id="email-input" placeholder="mail@example.com">
+            </div>
+
+            <div class="input-group">
+                <label>Şifrə</label>
+                <input type="password" id="pass-input" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" id="submit-btn" class="btn-submit">Daxil Ol</button>
+        </form>
+
+        <a href="index.html" class="back-link">← Ana səhifəyə dön</a>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyA5eb16DAKSVLkEzYsUrgxL9vfrJP7w-es",
+          authDomain: "etir-magazasi-d7679.firebaseapp.com",
+          projectId: "etir-magazasi-d7679",
+          storageBucket: "etir-magazasi-d7679.firebasestorage.app",
+          messagingSenderId: "1045258773680",
+          appId: "1:1045258773680:web:ab2edd54ba3f0ef0530775"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let isRegister = false;
+
+        function toggleMode() {
+            isRegister = !isRegister;
+            const card = document.getElementById('auth-card');
+            const toggleBtn = document.getElementById('mode-toggle');
+            const title = document.getElementById('form-title');
+            const submitBtn = document.getElementById('submit-btn');
+            const nameField = document.getElementById('name-field');
+            const emailField = document.getElementById('email-field');
+
+            if (isRegister) {
+                card.className = 'auth-card register-mode';
+                toggleBtn.innerText = 'Giriş et';
+                title.innerText = 'Yeni Hesab';
+                submitBtn.innerText = 'Qeydiyyatı Tamamla';
+                nameField.classList.remove('hidden');
+                emailField.classList.remove('hidden');
+            } else {
+                card.className = 'auth-card login-mode';
+                toggleBtn.innerText = 'Hesab yarat';
+                title.innerText = 'Giriş';
+                submitBtn.innerText = 'Daxil Ol';
+                nameField.classList.add('hidden');
+                emailField.classList.add('hidden');
+            }
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            const nick = document.getElementById('nick-input').value.trim();
+            const pass = document.getElementById('pass-input').value;
+
+            // --- ADMIN GİRİŞİ ---
+            if (!isRegister && nick === "admin" && pass === "velo2026") {
+                localStorage.setItem("activeUser", "admin");
+                localStorage.setItem("role", "admin");
+                window.location.href = "admin.html";
+                return;
+            }
+
+            if (isRegister) {
+                // Qeydiyyat Prosesi
+                db.collection("users").doc(nick).set({
+                    nickname: nick,
+                    password: pass,
+                    fullName: document.getElementById('name-input').value,
+                    email: document.getElementById('email-input').value,
+                    regDate: new Date().toLocaleDateString()
+                }).then(() => {
+                    alert("Uğurla qeydiyyatdan keçdiniz!");
+                    toggleMode();
+                });
+            } else {
+                // Giriş Prosesi
+                db.collection("users").doc(nick).get().then((doc) => {
+                    if (doc.exists && doc.data().password === pass) {
+                        localStorage.setItem("activeUser", nick);
+                        localStorage.setItem("role", "user");
+                        window.location.href = "dashboard.html";
+                    } else {
+                        alert("İstifadəçi adı və ya şifrə yanlışdır!");
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
