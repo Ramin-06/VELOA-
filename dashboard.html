@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VELO AI | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root { --navy: #0A192F; --gold: #C5A059; --white: #FFFFFF; --gray: #e2e8f0; --success: #10B981; --danger: #ff4d4d; }
+        body { background-color: #f8f9fa; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; color: var(--navy); }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--gray); margin-bottom: 30px; }
+        .user-info { font-size: 13px; font-weight: 700; border: 1px solid var(--gold); padding: 8px 15px; border-radius: 10px; background: white; }
+        .logout-btn { background: var(--danger); color: white; padding: 8px 15px; border-radius: 10px; text-decoration: none; font-size: 12px; font-weight: 700; }
+        .section-title { font-size: 18px; font-weight: 800; margin: 30px 0 15px; display: flex; align-items: center; gap: 10px; }
+        .section-title::before { content: ""; width: 4px; height: 20px; background: var(--gold); border-radius: 2px; }
+        .dashboard-box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .packages-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .pkg-card { background: white; padding: 12px; border-radius: 12px; border: 2px solid var(--gray); cursor: pointer; text-align: center; font-size: 13px; font-weight: 600; transition: 0.3s; }
+        .pkg-card.active { border-color: var(--gold); background: #fefcf6; transform: translateY(-2px); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input, textarea { padding: 12px; border: 1px solid var(--gray); border-radius: 10px; font-family: inherit; font-size: 14px; outline: none; width: 100%; box-sizing: border-box; }
+        .btn-confirm { grid-column: span 2; background: var(--navy); color: white; padding: 16px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; }
+        
+        .status-container { display: flex; flex-direction: column; gap: 20px; position: relative; padding-left: 35px; }
+        .status-container::before { content: ""; position: absolute; left: 7px; top: 5px; bottom: 5px; width: 2px; background: var(--gray); }
+        .status-step { position: relative; opacity: 0.2; transition: 0.5s; }
+        .status-step.completed { opacity: 1; }
+        .status-step::after { content: ""; position: absolute; left: -35px; top: 4px; width: 16px; height: 16px; background: white; border: 2px solid var(--gray); border-radius: 50%; z-index: 2; }
+        .status-step.completed::after { background: var(--gold); border-color: var(--gold); }
+        
+        .archive-item { border-left: 5px solid var(--success); padding: 15px; background: #f0fdf4; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div style="font-weight: 900; font-size: 22px; color: var(--navy);">VELO AI</div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div class="user-info" id="display-user">@nickname</div>
+            <a href="cabinet.html" class="logout-btn" onclick="localStorage.clear()">Çıxış</a>
+        </div>
+    </header>
+
+    <div id="new-order-block">
+        <div class="section-title">Yeni Paket Seçimi</div>
+        <div class="packages-grid">
+            <div class="pkg-card" onclick="selectPkg('Standard', this)">Standard</div>
+            <div class="pkg-card active" onclick="selectPkg('Pro Growth', this)">Pro Growth</div>
+            <div class="pkg-card" onclick="selectPkg('Business', this)">Business</div>
+        </div>
+        <div class="dashboard-box">
+            <form class="form-grid" onsubmit="handleNewOrder(event)">
+                <input type="text" id="shopName" placeholder="Mağaza Adı" required>
+                <input type="tel" id="phone" placeholder="Əlaqə Nömrəsi" required>
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="date" id="birthDate" required>
+                <textarea id="notes" rows="2" style="grid-column: span 2;" placeholder="Əlavə qeydlər"></textarea>
+                <button type="submit" class="btn-confirm">Yeni Müraciəti Tamamla</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="status-section" class="hidden">
+        <div class="section-title">Aktiv Sifarişin Statusu</div>
+        <div class="dashboard-box">
+            <div class="status-container">
+                <div class="status-step" id="step-1"><h4>Sifariş qəbul edildi</h4></div>
+                <div class="status-step" id="step-2"><h4>Hazırlanır</h4></div>
+                <div class="status-step" id="step-3"><h4>Domain Alındı</h4></div>
+                <div class="status-step" id="step-4"><h4>İnteqrasiya prosesi</h4></div>
+                <div class="status-step" id="step-5"><h4>Tamamlandı</h4></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title">Tamamlanan Sifarişlər</div>
+    <div id="archive-section" class="dashboard-box">
+        <div id="archive-list">
+            <p style="text-align:center; color:#94a3b8; font-size:13px;">Yüklənir...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA5eb16DAKSVLkEzYsUrgxL9vfrJP7w-es",
+      authDomain: "etir-magazasi-d7679.firebaseapp.com",
+      projectId: "etir-magazasi-d7679",
+      storageBucket: "etir-magazasi-d7679.firebasestorage.app",
+      messagingSenderId: "1045258773680",
+      appId: "1:1045258773680:web:ab2edd54ba3f0ef0530775"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const activeUser = localStorage.getItem("activeUser");
+
+    if(!activeUser) window.location.href="cabinet.html";
+    document.getElementById('display-user').innerText = "@" + activeUser;
+
+    let selectedPkgName = "Pro Growth";
+    function selectPkg(p, el) {
+        selectedPkgName = p;
+        document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    async function handleNewOrder(e) {
+        e.preventDefault();
+        try {
+            const newData = {
+                userNickname: activeUser,
+                shopName: document.getElementById('shopName').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                birthDate: document.getElementById('birthDate').value,
+                note: document.getElementById('notes').value, // Admin 'note' gözləyir, biz ID 'notes' olanı göndəririk
+                packageName: selectedPkgName,
+                status: 1,
+                orderDate: new Date().toLocaleString('az-AZ'),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await db.collection("orders").doc(activeUser).set(newData);
+            alert("Yeni müraciətiniz qəbul edildi!");
+        } catch (error) {
+            console.error("Xəta:", error);
+            alert("Xəta baş verdi, yenidən yoxlayın.");
+        }
+    }
+
+    db.collection("orders").doc(activeUser).onSnapshot((doc) => {
+        const orderBlock = document.getElementById('new-order-block');
+        const statusSection = document.getElementById('status-section');
+
+        if (doc.exists) {
+            const data = doc.data();
+            statusSection.classList.remove('hidden');
+            orderBlock.classList.add('hidden');
+
+            for (let i = 1; i <= 5; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                if(stepEl) {
+                    stepEl.className = i <= data.status ? "status-step completed" : "status-step";
+                }
+            }
+        } else {
+            orderBlock.classList.remove('hidden');
+            statusSection.classList.add('hidden');
+        }
+    });
+
+    db.collection("completed_orders").where("userNickname", "==", activeUser)
+      .onSnapshot((querySnapshot) => {
+        const list = document.getElementById('archive-list');
+        let html = "";
+        if (querySnapshot.empty) {
+            html = `<p style="text-align:center; color:#94a3b8; font-size:13px;">Hələlik arxivdə məlumat yoxdur.</p>`;
+        } else {
+            querySnapshot.forEach((doc) => {
+                const d = doc.data();
+                html += `
+                    <div class="archive-item">
+                        <div><strong>${d.shopName}</strong> <small>(${d.packageName || 'Standart'})</small><br>
+                        <span style="font-size:11px; color:#94a3b8">${d.orderDate || ''}</span></div>
+                        <div style="color:var(--success); font-weight:800; font-size:12px;">TAMAMLANDI ✓</div>
+                    </div>
+                `;
+            });
+        }
+        list.innerHTML = html;
+    });
+</script>
+</body>
+</html>
