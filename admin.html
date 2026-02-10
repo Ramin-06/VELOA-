@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VELO AI | Admin Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        if (localStorage.getItem("role") !== "admin") {
+            window.location.replace("cabinet.html");
+        }
+    </script>
+
+    <style>
+        :root {
+            --navy: #0A192F; --gold: #C5A059; --bg: #F8FAFC; --white: #FFFFFF;
+            --text-dark: #1E293B; --text-muted: #64748B; --success: #10B981;
+        }
+
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); margin: 0; display: flex; color: var(--text-dark); }
+
+        /* --- DESKTOP SIDEBAR --- */
+        .sidebar { width: 260px; background: var(--navy); height: 100vh; color: white; padding: 30px 20px; position: fixed; box-sizing: border-box; z-index: 100; transition: 0.3s; }
+        .sidebar h2 { color: var(--gold); font-weight: 800; margin-bottom: 40px; }
+        .nav-item { padding: 12px; margin-bottom: 10px; border-radius: 10px; cursor: pointer; transition: 0.3s; font-weight: 600; opacity: 0.7; }
+        .nav-item.active { background: rgba(197, 160, 89, 0.2); color: var(--gold); opacity: 1; }
+
+        .main { margin-left: 260px; flex: 1; padding: 40px; box-sizing: border-box; min-height: 100vh; width: 100%; }
+        
+        /* --- STATS PILLS --- */
+        .stats-row { display: flex; gap: 15px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 5px; }
+        .stat-pill { background: white; padding: 12px 20px; border-radius: 50px; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+        .stat-pill b { font-size: 18px; color: var(--navy); }
+        .stat-pill span { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); }
+
+        /* --- TABLE STYLE (Desktop) --- */
+        .table-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #E2E8F0; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #F8FAFC; padding: 15px 20px; text-align: left; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 18px 20px; border-top: 1px solid #F1F5F9; font-size: 14px; }
+
+        .user-tag { font-weight: 800; color: var(--gold); }
+        select { padding: 8px; border-radius: 8px; border: 1px solid #E2E8F0; outline: none; font-family: inherit; font-size: 13px; background: white; }
+        .btn-save { background: var(--navy); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 12px; }
+
+        .section-pane { display: none; }
+        .section-pane.active { display: block; }
+
+        /* --- MOBILE REFINEMENTS --- */
+        .mobile-nav { display: none; }
+        .mobile-card { display: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 20px 15px 100px; }
+            .table-card { background: transparent; border: none; box-shadow: none; }
+            table { display: none; }
+            
+            .mobile-card { 
+                display: block; background: white; border-radius: 18px; padding: 0; 
+                margin-bottom: 12px; border: 1px solid #F1F5F9; overflow: hidden;
+            }
+            .m-card-visible { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+            .m-card-header b { font-size: 15px; color: var(--navy); display: block; }
+            .m-arrow { font-size: 12px; color: var(--gold); transition: 0.3s; }
+            
+            .m-card-hidden { max-height: 0; overflow: hidden; transition: 0.3s ease-out; padding: 0 16px; background: #FAFBFF; }
+            .mobile-card.open .m-card-hidden { max-height: 500px; padding-bottom: 16px; border-top: 1px solid #F1F5F9; }
+            .mobile-card.open .m-arrow { transform: rotate(180deg); }
+
+            .m-detail-row { margin-top: 12px; }
+            .m-detail-row label { display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
+            .m-detail-row p { margin: 0; font-size: 13px; color: var(--text-dark); font-weight: 500; }
+
+            .m-card-footer { margin-top: 15px; padding-top: 15px; border-top: 1px dotted #E2E8F0; display: flex; gap: 8px; }
+            .m-card-footer select, .m-card-footer button { flex: 1; height: 40px; }
+
+            .mobile-nav { 
+                display: flex; position: fixed; bottom: 0; left: 0; width: 100%; 
+                background: white; border-top: 1px solid #E2E8F0; padding: 12px 0 25px; 
+                z-index: 1000; justify-content: space-around; 
+            }
+            .m-tab { text-align: center; color: var(--text-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+            .m-tab.active { color: var(--navy); }
+            .m-tab i { display: block; font-size: 20px; margin-bottom: 4px; font-style: normal; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>VELO AI</h2>
+        <div class="nav-item active" id="d-nav-orders" onclick="showSection('orders')">Sifarişlər</div>
+        <div class="nav-item" id="d-nav-customers" onclick="showSection('customers')">Müştərilər</div>
+    </div>
+
+    <div class="main">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h1 style="font-size: 24px; font-weight: 800; margin:0;" id="page-title">İdarə Paneli</h1>
+            <button onclick="adminLogout()" style="background:#FFF1F1; color:#EF4444; border:none; padding:8px 15px; border-radius:10px; font-weight:700; cursor:pointer; font-size:12px;">ÇIXIŞ</button>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-pill"><span>Cəmi:</span><b id="count-total">0</b></div>
+            <div class="stat-pill"><span>Gözləyən:</span><b id="count-active" style="color:var(--gold)">0</b></div>
+            <div class="stat-pill"><span>Bitən:</span><b id="count-done" style="color:var(--success)">0</b></div>
+        </div>
+
+        <div id="orders-pane" class="section-pane active">
+            <div class="table-card">
+                <table id="desktop-table-orders">
+                    <thead>
+                        <tr>
+                            <th>Müştəri</th>
+                            <th>Mağaza / Detallar</th>
+                            <th>Qeyd / Doğum T.</th>
+                            <th>Status</th>
+                            <th>Əməliyyat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-list-desktop"></tbody>
+                </table>
+                <div id="orders-list-mobile"></div>
+            </div>
+        </div>
+
+        <div id="customers-pane" class="section-pane">
+            <div class="table-card">
+                <table id="desktop-table-customers">
+                    <thead>
+                        <tr>
+                            <th>Müştəri</th>
+                            <th>Mağaza</th>
+                            <th>Doğum Tarixi</th>
+                            <th>Tarix</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-list-desktop"></tbody>
+                </table>
+                <div id="customers-list-mobile"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mobile-nav">
+        <div class="m-tab active" id="m-tab-orders" onclick="showSection('orders')"><i>📋</i>Sifarişlər</div>
+        <div class="m-tab" id="m-tab-customers" onclick="showSection('customers')"><i>👥</i>Müştərilər</div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5eb16DAKSVLkEzYsUrgxL9vfrJP7w-es",
+            authDomain: "etir-magazasi-d7679.firebaseapp.com",
+            projectId: "etir-magazasi-d7679",
+            storageBucket: "etir-magazasi-d7679.firebasestorage.app",
+            messagingSenderId: "1045258773680",
+            appId: "1:1045258773680:web:ab2edd54ba3f0ef0530775"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function toggleMobileCard(el) {
+            el.parentElement.classList.toggle('open');
+        }
+
+        function showSection(sect) {
+            document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item, .m-tab').forEach(i => i.classList.remove('active'));
+            document.getElementById(sect + '-pane').classList.add('active');
+            document.getElementById('d-nav-' + sect)?.classList.add('active');
+            document.getElementById('m-tab-' + sect)?.classList.add('active');
+        }
+
+        function initAdmin() {
+            db.collection("orders").onSnapshot(snap => {
+                const deskList = document.getElementById("orders-list-desktop");
+                const mobList = document.getElementById("orders-list-mobile");
+                deskList.innerHTML = ""; mobList.innerHTML = "";
+                document.getElementById('count-active').innerText = snap.size;
+                updateTotal();
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const options = `
+                        <option value="1" ${d.status==1?'selected':''}>1. Qəbul edildi</option>
+                        <option value="2" ${d.status==2?'selected':''}>2. Hazırlanır</option>
+                        <option value="3" ${d.status==3?'selected':''}>3. Domain alındı</option>
+                        <option value="4" ${d.status==4?'selected':''}>4. İnteqrasiya</option>
+                        <option value="5" ${d.status==5?'selected':''}>5. Tamamla</option>`;
+                    
+                    deskList.innerHTML += `<tr>
+                        <td><span class="user-tag">@${d.userNickname}</span><br><small>${d.phone || ''}</small></td>
+                        <td><b>${d.shopName}</b><br><small>${d.packageName || 'Standart'}</small></td>
+                        <td><small>DT: ${d.birthDate || '-'}</small><br><small style="color:var(--text-muted)">Q: ${d.note || 'Yoxdur'}</small></td>
+                        <td><select id="status-d-${doc.id}">${options}</select></td>
+                        <td><button class="btn-save" onclick="updateStatus('${doc.id}', 'd')">Saxla</button></td>
+                    </tr>`;
+
+                    mobList.innerHTML += `
+                    <div class="mobile-card">
+                        <div class="m-card-visible" onclick="toggleMobileCard(this)">
+                            <div>
+                                <b>${d.shopName}</b>
+                                <span class="user-tag">@${d.userNickname}</span>
+                            </div>
+                            <div class="m-arrow">▼</div>
+                        </div>
+                        <div class="m-card-hidden">
+                            <div class="m-detail-row"><label>Doğum Tarixi</label><p>${d.birthDate || 'Qeyd edilməyib'}</p></div>
+                            <div class="m-detail-row"><label>Paket</label><p>${d.packageName || 'Standart'}</p></div>
+                            <div class="m-detail-row"><label>Qeyd</label><p>${d.note || 'Yoxdur'}</p></div>
+                            <div class="m-card-footer">
+                                <select id="status-m-${doc.id}">${options}</select>
+                                <button class="btn-save" onclick="updateStatus('${doc.id}', 'm')">YADDA SAXLA</button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            });
+
+            db.collection("completed_orders").onSnapshot(snap => {
+                const deskList = document.getElementById("customers-list-desktop");
+                const mobList = document.getElementById("customers-list-mobile");
+                deskList.innerHTML = ""; mobList.innerHTML = "";
+                document.getElementById('count-done').innerText = snap.size;
+                updateTotal();
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    deskList.innerHTML += `<tr>
+                        <td>@${d.userNickname}</td>
+                        <td><b>${d.shopName}</b></td>
+                        <td>${d.birthDate || '-'}</td>
+                        <td>${d.orderDate || '-'}</td>
+                    </tr>`;
+                    mobList.innerHTML += `<div class="mobile-card" style="border-left:4px solid var(--success); padding:16px;">
+                        <b>${d.shopName}</b><br><small>@${d.userNickname} • DT: ${d.birthDate || '-'}</small>
+                    </div>`;
+                });
+            });
+        }
+
+        async function updateStatus(id, type) {
+            const v = parseInt(document.getElementById(`status-${type}-${id}`).value);
+            if(v === 5) {
+                if(!confirm("Sifarişi tamamlamaq və arxivə atmaq istəyirsiniz?")) return;
+                const docRef = await db.collection("orders").doc(id).get();
+                if(docRef.exists) {
+                    await db.collection("completed_orders").add({
+                        ...docRef.data(), 
+                        status: 5, 
+                        completedAt: new Date().toISOString()
+                    });
+                    await db.collection("orders").doc(id).delete();
+                }
+            } else {
+                await db.collection("orders").doc(id).update({status: v});
+            }
+            alert("Status yeniləndi");
+        }
+
+        function updateTotal() {
+            const a = parseInt(document.getElementById('count-active').innerText) || 0;
+            const d = parseInt(document.getElementById('count-done').innerText) || 0;
+            document.getElementById('count-total').innerText = a + d;
+        }
+
+        function adminLogout() { localStorage.clear(); window.location.replace("cabinet.html"); }
+        initAdmin();
+    </script>
+</body>
+</html>
