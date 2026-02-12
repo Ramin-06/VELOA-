@@ -3,307 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VELO AI | Admin Premium</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>VELO AI | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    <script>
-        if (localStorage.getItem("role") !== "admin") {
-            window.location.replace("cabinet.html");
-        }
-    </script>
-
     <style>
-        :root {
-            --navy: #0F172A; --gold: #D4AF37; --bg: #FAFAFA; --white: #FFFFFF;
-            --text-dark: #1E293B; --text-muted: #94A3B8; --success: #10B981; --border: #F1F5F9;
-        }
-
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); margin: 0; color: var(--text-dark); }
-
-        .sidebar { width: 220px; background: var(--navy); height: 100vh; color: white; padding: 25px; position: fixed; z-index: 100; border-right: 1px solid rgba(255,255,255,0.05); }
-        .sidebar h2 { color: var(--gold); font-weight: 800; font-size: 16px; margin-bottom: 30px; letter-spacing: 1px; }
-        .nav-item { padding: 10px 15px; margin-bottom: 6px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: 600; font-size: 13px; opacity: 0.5; }
-        .nav-item.active { background: rgba(212, 175, 55, 0.1); color: var(--gold); opacity: 1; }
-
-        .main { margin-left: 220px; padding: 30px 40px; min-height: 100vh; }
-        .stats-row { display: flex; gap: 12px; margin-bottom: 25px; }
-        .stat-pill { background: white; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-        .stat-pill b { font-size: 14px; color: var(--navy); }
-        .stat-pill span { font-size: 9px; text-transform: uppercase; font-weight: 800; color: var(--text-muted); }
-
-        .table-card { background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.02); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #FDFDFD; padding: 14px 20px; text-align: left; font-size: 10px; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
-        td { padding: 12px 20px; border-bottom: 1px solid #FAFAFA; font-size: 13px; vertical-align: middle; }
+        :root { --navy: #0F172A; --gold: #D4AF37; --bg: #FAFAFA; --border: #F1F5F9; --text-light: #64748B; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; color: var(--navy); overflow-x: hidden; }
         
-        .last-msg-box { font-size: 11px; color: #64748B; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #F8FAFC; padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; }
-        .seen { color: var(--success); font-weight: bold; margin-left: 5px; }
-        .unseen { color: #CBD5E0; margin-left: 5px; }
+        .top-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border); }
+        .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.5px; }
+        .logo span { color: var(--gold); }
+        .nav-tabs { display: flex; gap: 20px; position: absolute; left: 50%; transform: translateX(-50%); }
+        .nav-link { cursor: pointer; font-size: 10px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.8px; transition: 0.3s; }
+        .nav-link.active { color: var(--navy); border-bottom: 1.5px solid var(--gold); padding-bottom: 2px; }
+        
+        .nav-right { display: flex; gap: 18px; align-items: center; }
+        .notif-wrapper { position: relative; cursor: pointer; }
+        .bell-icon { font-size: 16px; color: var(--text-light); }
+        .notif-badge { position: absolute; top: -1px; right: -1px; width: 7px; height: 7px; background: #FF4D4D; border-radius: 50%; display: none; border: 1.5px solid white; }
 
-        select { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; background: #F9FAFB; }
-        .btn-mini { border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-        .btn-save { background: var(--navy); color: white; padding: 7px 14px; font-weight: 700; font-size: 11px; }
-        .btn-notif { background: white; color: var(--text-dark); width: 32px; height: 32px; font-size: 14px; border: 1px solid var(--border); transition: 0.2s; }
-        .btn-history { background: #F1F5F9; color: var(--navy); padding: 5px 10px; font-size: 10px; font-weight: 700; margin-left: 5px; }
+        .container { max-width: 500px; margin: 0 auto; padding: 20px 15px; }
+        
+        .chat-container { height: calc(100vh - 150px); display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; overflow-y: auto; padding-bottom: 80px; display: flex; flex-direction: column; gap: 10px; }
+        .bubble { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; animation: fadeIn 0.3s ease; }
+        .bot { background: #FFFFFF; color: var(--navy); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        .user { background: var(--navy); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        
+        .status-card { text-align: center; padding: 30px 0; }
+        .status-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 40px; }
+        .progress-bar { display: flex; justify-content: space-between; position: relative; margin-bottom: 50px; padding: 0 10px; }
+        .line-bg { position: absolute; top: 5px; left: 10px; right: 10px; height: 1.5px; background: #E2E8F0; z-index: 1; }
+        .line-fill { position: absolute; top: 5px; left: 10px; height: 1.5px; background: var(--gold); z-index: 2; transition: 1s; width: 0%; }
+        .dot { width: 10px; height: 10px; background: #E2E8F0; border-radius: 50%; z-index: 3; position: relative; }
+        .dot.active { background: var(--gold); box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15); }
+        .dot.done { background: var(--gold); }
+        .dot::after { content: attr(data-label); position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-light); white-space: nowrap; }
 
-        /* Modal */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 400px; border-radius: 15px; max-height: 75vh; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
-        .history-item { padding: 12px; border-bottom: 1px solid #F8FAFC; display: flex; justify-content: space-between; align-items: center; }
-        .history-item small { display: block; color: var(--text-muted); font-size: 9px; margin-top: 4px; }
+        .archive-container { display: flex; flex-direction: column; gap: 12px; padding-top: 10px; }
+        .archive-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; transition: 0.3s; position: relative; overflow: hidden; }
+        .archive-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-color: var(--gold); }
+        .archive-icon { width: 40px; height: 40px; background: #F8FAFC; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gold); border: 1px solid var(--border); }
+        .archive-details { flex: 1; }
+        .archive-details b { font-size: 14px; color: var(--navy); display: block; margin-bottom: 2px; }
+        .archive-details span { font-size: 11px; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
+        .archive-status { background: #ECFDF5; color: #10B981; font-size: 9px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
 
-        /* Masaüstü gizlətmə */
-        #orders-list-mobile, #customers-list-mobile, .mobile-nav { display: none; }
+        .notif-dropdown { position: absolute; top: 40px; right: 0; width: 280px; background: #fff; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 15px 40px rgba(0,0,0,0.1); display: none; z-index: 1100; max-height: 400px; overflow-y: auto; }
+        .notif-item { padding: 14px; border-bottom: 1px solid var(--border); position: relative; }
+        .notif-text { font-size: 11.5px; line-height: 1.4; color: var(--navy); word-break: break-word; display: block; margin-bottom: 8px; }
+        .notif-text a { color: #3B82F6; text-decoration: underline; font-weight: 500; }
+        .notif-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+        .notif-time { font-size: 9px; color: var(--text-light); }
+        .notif-tools { display: flex; gap: 12px; align-items: center; }
+        .notif-tools i { cursor: pointer; transition: 0.2s; font-size: 13px; color: #CBD5E0; }
 
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main { margin-left: 0; padding: 20px 15px 100px; }
-            table { display: none; }
-            #orders-list-mobile, #customers-list-mobile, .mobile-nav { display: flex; }
-            #orders-list-mobile, #customers-list-mobile { flex-direction: column; }
-            .mobile-card { background: white; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); padding: 14px; }
-            .m-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; }
-            .m-footer { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F8FAFC; align-items: center; }
-            .mobile-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid var(--border); padding: 12px 0 25px; z-index: 1000; justify-content: space-around; }
-            .m-tab { text-align: center; color: var(--text-muted); font-size: 9px; font-weight: 700; text-transform: uppercase; }
-            .m-tab.active { color: var(--navy); }
-            .m-tab i { display: block; font-size: 18px; margin-bottom: 4px; }
-        }
+        .chat-input-area { position: fixed; bottom: 20px; left: 15px; right: 15px; max-width: 470px; margin: 0 auto; background: #fff; padding: 5px; border-radius: 100px; display: flex; align-items: center; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.04); }
+        .chat-input-area input { flex: 1; border: none; padding: 10px 15px; font-size: 13px; background: transparent; }
+        .send-btn { background: var(--navy); color: white; border: none; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
 
-        .section-pane { display: none; }
-        .section-pane.active { display: block; }
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div id="historyModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 style="font-size:14px; margin:0; font-weight: 800;">Mesaj Tarixçəsi</h3>
-                <i class="fa-solid fa-xmark" style="cursor:pointer; font-size: 18px;" onclick="closeHistory()"></i>
-            </div>
-            <div id="history-body"></div>
-        </div>
+<nav class="top-nav">
+    <div class="logo">VELO<span>AI</span></div>
+    <div class="nav-tabs">
+        <div class="nav-link active" id="btn-active" onclick="switchTab('active')">Sifariş</div>
+        <div class="nav-link" id="btn-archive" onclick="switchTab('archive')">Arxiv</div>
     </div>
-
-    <div class="sidebar">
-        <h2>VELO AI</h2>
-        <div class="nav-item active" id="d-nav-orders" onclick="showSection('orders')"><i class="fa-solid fa-list-check" style="margin-right:10px"></i> Sifarişlər</div>
-        <div class="nav-item" id="d-nav-customers" onclick="showSection('customers')"><i class="fa-solid fa-users" style="margin-right:10px"></i> Müştərilər</div>
-    </div>
-
-    <div class="main">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h1 style="font-size: 18px; font-weight: 800; margin:0;" id="page-title">Sifarişlər</h1>
-            <button onclick="adminLogout()" style="background:#FFF1F1; color:#EF4444; border:none; padding:7px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:10px;">ÇIXIŞ</button>
-        </div>
-
-        <div class="stats-row">
-            <div class="stat-pill"><span>Cəmi</span><b id="count-total">0</b></div>
-            <div class="stat-pill"><span>Aktiv</span><b id="count-active" style="color:var(--gold)">0</b></div>
-            <div class="stat-pill"><span>Arxiv</span><b id="count-done" style="color:var(--success)">0</b></div>
-        </div>
-
-        <div id="orders-pane" class="section-pane active">
-            <div class="table-card">
-                <table>
-                    <thead><tr><th>İstifadəçi</th><th>Mağaza / Paket</th><th>Status</th><th>Son Bildiriş</th><th>İdarə</th></tr></thead>
-                    <tbody id="orders-list-desktop"></tbody>
-                </table>
-                <div id="orders-list-mobile"></div>
+    <div class="nav-right">
+        <div class="notif-wrapper" onclick="toggleNotifs(event)">
+            <i class="fa-regular fa-bell bell-icon"></i>
+            <div class="notif-badge" id="notif-badge"></div>
+            <div class="notif-dropdown" id="notif-dropdown">
+                <div id="notif-list"></div>
             </div>
         </div>
+        <a href="cabinet.html" style="color:var(--text-light); font-size:14px;" onclick="localStorage.clear()"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+    </div>
+</nav>
 
-        <div id="customers-pane" class="section-pane">
-            <div class="table-card">
-                <table>
-                    <thead><tr><th>Müştəri Adı</th><th>Mağaza</th><th>Tarix</th><th>Mesajlar</th></tr></thead>
-                    <tbody id="customers-list-desktop"></tbody>
-                </table>
-                <div id="customers-list-mobile"></div>
+<div class="container">
+    <div id="tab-active">
+        <div id="chat-ui" class="chat-container hidden">
+            <div class="chat-messages" id="chat-msgs"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Yazın..." onkeypress="if(event.key === 'Enter') handleUserMsg()">
+                <button class="send-btn" onclick="handleUserMsg()"><i class="fa-solid fa-arrow-up"></i></button>
             </div>
         </div>
+        <div id="status-ui" class="status-card hidden">
+            <h3 id="st-shop-name">--</h3>
+            <div class="progress-bar">
+                <div class="line-bg"></div>
+                <div class="line-fill" id="st-fill"></div>
+                <div class="dot" id="d1" data-label="Qəbul"></div>
+                <div class="dot" id="d2" data-label="Hazırlıq"></div>
+                <div class="dot" id="d3" data-label="Domain"></div>
+                <div class="dot" id="d4" data-label="Qoşulma"></div>
+                <div class="dot" id="d5" data-label="Hazır"></div>
+            </div>
+            <p id="st-label" style="font-size:12px; font-weight:600; margin-top:10px; color:var(--gold)"></p>
+        </div>
     </div>
+    <div id="tab-archive" class="hidden"><div id="archive-content"></div></div>
+</div>
 
-    <div class="mobile-nav">
-        <div class="m-tab active" id="m-tab-orders" onclick="showSection('orders')"><i class="fa-solid fa-list"></i>Sifariş</div>
-        <div class="m-tab" id="m-tab-customers" onclick="showSection('customers')"><i class="fa-solid fa-user-group"></i>Müştəri</div>
-    </div>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA5eb16DAKSVLkEzYsUrgxL9vfrJP7w-es",
+        authDomain: "etir-magazasi-d7679.firebaseapp.com",
+        projectId: "etir-magazasi-d7679",
+        storageBucket: "etir-magazasi-d7679.firebasestorage.app",
+        messagingSenderId: "1045258773680",
+        appId: "1:1045258773680:web:ab2edd54ba3f0ef0530775"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const activeUser = localStorage.getItem("activeUser");
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyA5eb16DAKSVLkEzYsUrgxL9vfrJP7w-es",
-            authDomain: "etir-magazasi-d7679.firebaseapp.com",
-            projectId: "etir-magazasi-d7679",
-            storageBucket: "etir-magazasi-d7679.firebasestorage.app",
-            messagingSenderId: "1045258773680",
-            appId: "1:1045258773680:web:ab2edd54ba3f0ef0530775"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+    const botQs = ["Salam! 😊 Mağazanın adını nə qoymaq istəyirsən?", "Maraqlı addır! ✨ Hansı paketi seçirsən?", "Nömrəni yaza bilərsən?", "Bəs e-poçt ünvanın?", "Və son olaraq, doğum tarixin? 🎉"];
+    const dKeys = ["shopName", "packageName", "phone", "email", "birthDate"];
+    let curQ = 0, collected = { userNickname: activeUser, status: 1 };
+    let msgUnsub = null;
 
-        function getStatusMarkup(d, id, coll) {
-            if(!d.lastNotification) return '<span style="color:#CCC; font-size:10px;">Yoxdur</span>';
-            const tick = d.notifSeen ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check unseen"></i>';
-            return `
-                <div style="display:flex; align-items:center;">
-                    <div class="last-msg-box">${d.lastNotification}</div>
-                    ${tick}
-                </div>`;
-        }
+    function initApp() {
+        if(!activeUser) { window.location.replace("cabinet.html"); return; }
+        
+        db.collection("orders").doc(activeUser).onSnapshot(doc => {
+            if(doc.exists) {
+                renderStatusUI(doc.data());
+                listenToMessages("orders");
+            } else {
+                // SİFARİŞ BİTDİKDƏ (SƏNƏD SİLİNDİKDƏ) BURADA TƏMİZLƏNİR
+                document.getElementById('status-ui').classList.add('hidden');
+                document.getElementById('chat-ui').classList.remove('hidden');
+                
+                // Çatbotun içini təmizlə və sualları sıfırla
+                const msgsDiv = document.getElementById('chat-msgs');
+                msgsDiv.innerHTML = ""; 
+                curQ = 0; 
+                collected = { userNickname: activeUser, status: 1 };
+                
+                if(msgsDiv.children.length === 0) addBubble(botQs[0], 'bot');
+                listenToMessages("completed_orders");
+            }
+        });
+    }
 
-        function initAdmin() {
-            db.collection("orders").onSnapshot(snap => {
-                const dList = document.getElementById("orders-list-desktop");
-                const mList = document.getElementById("orders-list-mobile");
-                dList.innerHTML = ""; mList.innerHTML = "";
-                document.getElementById('count-active').innerText = snap.size;
-                updateTotal();
-                snap.forEach(doc => {
-                    const d = doc.data(); const id = doc.id;
-                    const stMarkup = getStatusMarkup(d, id, 'orders');
-                    const options = `<option value="1" ${d.status==1?'selected':''}>Qəbul</option><option value="2" ${d.status==2?'selected':''}>Hazırlıq</option><option value="3" ${d.status==3?'selected':''}>Domain</option><option value="4" ${d.status==4?'selected':''}>Sistem</option><option value="5" ${d.status==5?'selected':''}>Bitir</option>`;
-                    
-                    dList.innerHTML += `<tr>
-                        <td><b style="color:var(--gold)">@${d.userNickname}</b></td>
-                        <td><b>${d.shopName}</b></td>
-                        <td><select id="status-d-${id}">${options}</select></td>
-                        <td>${stMarkup}</td>
-                        <td style="display:flex; gap:8px"><button class="btn-mini btn-save" onclick="updateStatus('${id}', 'd')">OK</button><button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button></td>
-                    </tr>`;
-                    
-                    mList.innerHTML += `<div class="mobile-card">
-                        <div class="m-header"><span>@${d.userNickname}</span><span>${d.shopName}</span></div>
-                        <div style="font-size:11px; margin-bottom:10px;">${stMarkup}</div>
-                        <div class="m-footer">
-                            <select id="status-m-${id}">${options}</select>
-                            <button class="btn-mini btn-save" onclick="updateStatus('${id}', 'm')">OK</button>
-                            <button class="btn-mini btn-notif" style="margin-left:auto" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button>
-                        </div>
-                    </div>`;
-                });
-            });
+    function renderStatusUI(data) {
+        document.getElementById('chat-ui').classList.add('hidden');
+        document.getElementById('status-ui').classList.remove('hidden');
+        const s = data.status || 1;
+        const lbls = ["Sifariş qəbul edildi", "Hazırlıq", "Domain", "İnteqrasiya", "Hazır 🎉"];
+        document.getElementById('st-shop-name').innerText = data.shopName;
+        document.getElementById('st-label').innerText = lbls[s-1];
+        document.getElementById('st-fill').style.width = ((s-1)/4*100) + "%";
+        for(let i=1;i<=5;i++) document.getElementById('d'+i).className = 'dot '+(i<s?'done':(i===s?'active':''));
+    }
 
-            db.collection("completed_orders").onSnapshot(snap => {
-                const dList = document.getElementById("customers-list-desktop");
-                const mList = document.getElementById("customers-list-mobile");
-                dList.innerHTML = ""; mList.innerHTML = "";
-                document.getElementById('count-done').innerText = snap.size;
-                updateTotal();
-                snap.forEach(doc => {
-                    const d = doc.data(); const id = doc.id;
-                    dList.innerHTML += `<tr>
-                        <td>@${d.userNickname}</td>
-                        <td><b>${d.shopName}</b></td>
-                        <td>${d.orderDate}</td>
-                        <td>
-                            <button class="btn-mini btn-history" onclick="viewHistory('${id}', 'completed_orders')">MESAJLAR</button> 
-                            <button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'completed_orders')"><i class="fa-regular fa-comment-dots"></i></button>
-                        </td>
-                    </tr>`;
+    function listenToMessages(coll) {
+        if(msgUnsub) msgUnsub();
+        msgUnsub = db.collection(coll).doc(activeUser).collection("messages")
+            .orderBy("time", "desc")
+            .onSnapshot(snap => {
+                const list = document.getElementById('notif-list'), badge = document.getElementById('notif-badge');
+                const deleted = JSON.parse(localStorage.getItem("deletedNotifs") || "[]");
+                let count = 0, html = "";
 
-                    mList.innerHTML += `<div class="mobile-card">
-                        <div class="m-header"><span>@${d.userNickname}</span><span>${d.shopName}</span></div>
-                        <div class="m-footer">
-                             <button class="btn-mini btn-history" onclick="viewHistory('${id}', 'completed_orders')">TARİX</button>
-                             <button class="btn-mini btn-notif" style="margin-left:auto" onclick="sendMsg('${id}', 'completed_orders')"><i class="fa-regular fa-comment-dots"></i></button>
-                        </div>
-                    </div>`;
-                });
-            });
-        }
-
-        async function sendMsg(id, coll) {
-            const msg = prompt("Müştəriyə bildiriş yazın:");
-            if (!msg || msg.trim() === "") return;
-            const now = Date.now();
-            try {
-                await db.collection(coll).doc(id).update({ lastNotification: msg, notifTime: now, notifSeen: false });
-                await db.collection(coll).doc(id).collection("messages").add({
-                    text: msg, time: now, timeFormatted: new Date().toLocaleString('az-AZ'), seen: false
-                });
-                alert("Göndərildi!");
-            } catch (e) { alert("Xəta: " + e.message); }
-        }
-
-        async function viewHistory(id, coll) {
-            const body = document.getElementById("history-body");
-            body.innerHTML = "Yüklənir...";
-            document.getElementById("historyModal").style.display = "block";
-            try {
-                const snap = await db.collection(coll).doc(id).collection("messages").orderBy("time", "desc").get();
-                if(snap.empty) { body.innerHTML = "Mesaj yoxdur."; return; }
-                body.innerHTML = "";
                 snap.forEach(doc => {
                     const m = doc.data();
-                    const tick = m.seen ? '<i class="fa-solid fa-check-double" style="color:#10B981"></i>' : '<i class="fa-solid fa-check" style="color:#CBD5E0"></i>';
-                    body.innerHTML += `
-                        <div class="history-item">
-                            <div style="flex:1; padding-right:10px;">${m.text}<small>${m.timeFormatted}</small></div>
-                            <div>${tick}</div>
-                        </div>`;
-                });
-            } catch(e) { body.innerHTML = "Xəta!"; }
-        }
-
-        function closeHistory() { document.getElementById("historyModal").style.display = "none"; }
-        async function updateStatus(id, type) {
-            const selectEl = document.getElementById(`status-${type}-${id}`);
-            const v = parseInt(selectEl.value);
-            
-            try {
-                if(v === 5) {
-                    // Bitir seçilərsə arxivə köçür
-                    const ref = await db.collection("orders").doc(id).get();
-                    if (!ref.exists) return;
-                    
-                    await db.collection("completed_orders").doc(id).set({...ref.data(), status: 5});
-                    const msgs = await db.collection("orders").doc(id).collection("messages").get();
-                    
-                    for (const m of msgs.docs) {
-                        await db.collection("completed_orders").doc(id).collection("messages").doc(m.id).set(m.data());
+                    if(!deleted.includes(doc.id) && m.seen === false) {
+                        count++;
+                        const date = m.timeFormatted || "İndi";
+                        const textWithLinks = m.text.replace(/(https?:\/\/[^\s]+)/g, url => `<a href="${url}" target="_blank">${url}</a>`);
+                        html += `
+                            <div class="notif-item">
+                                <span class="notif-text">${textWithLinks}</span>
+                                <div class="notif-meta">
+                                    <span class="notif-time">${date}</span>
+                                    <div class="notif-tools">
+                                        <i class="fa-regular fa-copy" onclick="copyText('${m.text.replace(/'/g, "\\'")}')"></i>
+                                        <i class="fa-solid fa-xmark" style="color:#FF4D4D; margin-left:10px;" onclick="removeNotif('${doc.id}', '${coll}', event)"></i>
+                                    </div>
+                                </div>
+                            </div>`;
                     }
-                    await db.collection("orders").doc(id).delete();
-                    alert("Sifariş arxivə köçürüldü!");
-                } else {
-                    // Status yenilənir
-                    await db.collection("orders").doc(id).update({ status: v });
-                    
-                    // Vizual olaraq istifadəçiyə bildirmək üçün kiçik effekt
-                    selectEl.style.borderColor = "var(--success)";
-                    setTimeout(() => { selectEl.style.borderColor = "var(--border)"; }, 1000);
-                }
-            } catch (e) { 
-                console.error("Xəta:", e);
-                alert("Xəta baş verdi!"); 
+                });
+                badge.style.display = count > 0 ? 'block' : 'none';
+                list.innerHTML = count > 0 ? html : '<div style="padding:20px; color:#999; text-align:center; font-size:11px;">Bildiriş yoxdur.</div>';
+            });
+    }
+
+    async function removeNotif(id, coll, e) {
+        if(e) e.stopPropagation();
+        const deleted = JSON.parse(localStorage.getItem("deletedNotifs") || "[]");
+        deleted.push(id);
+        localStorage.setItem("deletedNotifs", JSON.stringify(deleted));
+        try {
+            await db.collection(coll).doc(activeUser).collection("messages").doc(id).update({ seen: true });
+        } catch(err) { console.log("Update error"); }
+    }
+
+    function copyText(t) {
+        navigator.clipboard.writeText(t).then(() => alert("Kopyalandı!"));
+    }
+
+    async function handleUserMsg() {
+        const inp = document.getElementById('chat-input'), v = inp.value.trim();
+        if(!v) return;
+        addBubble(v, 'user'); inp.value = "";
+        collected[dKeys[curQ]] = v;
+        curQ++;
+        if(curQ < botQs.length) setTimeout(()=>addBubble(botQs[curQ], 'bot'), 600);
+        else {
+            collected.orderDate = new Date().toLocaleDateString('az-AZ');
+            await db.collection("orders").doc(activeUser).set(collected);
+        }
+    }
+
+    function addBubble(t, s) {
+        const d = document.createElement('div'); d.className = `bubble ${s}`; d.innerText = t;
+        const m = document.getElementById('chat-msgs'); m.appendChild(d); m.scrollTop = m.scrollHeight;
+    }
+
+    function toggleNotifs(e) { e.stopPropagation(); const d = document.getElementById('notif-dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
+    window.onclick = () => document.getElementById('notif-dropdown').style.display = 'none';
+
+    function switchTab(t) {
+        document.getElementById('btn-active').classList.toggle('active', t === 'active');
+        document.getElementById('btn-archive').classList.toggle('active', t === 'archive');
+        document.getElementById('tab-active').classList.toggle('hidden', t === 'archive');
+        document.getElementById('tab-archive').classList.toggle('hidden', t === 'active');
+        if(t === 'archive') loadArchive();
+    }
+
+    async function loadArchive() {
+        const container = document.getElementById('archive-content');
+        container.innerHTML = `<div style="text-align:center; padding:30px;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--gold)"></i></div>`;
+        try {
+            const snapshot = await db.collection("completed_orders").where("userNickname", "==", activeUser).get();
+            if (snapshot.empty) {
+                container.innerHTML = `<p style="text-align:center; font-size:11px; color:#999; margin-top:40px;">Arxiv boşdur.</p>`;
+                return;
             }
-        }
+            let html = '<div class="archive-container">';
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                html += `
+                    <div class="archive-card">
+                        <div class="archive-icon"><i class="fa-solid fa-box-archive"></i></div>
+                        <div class="archive-details">
+                            <b>${d.shopName || 'Mağaza'}</b>
+                            <span><i class="fa-regular fa-calendar"></i> ${d.orderDate || ''}</span>
+                        </div>
+                        <div class="archive-status">Hazır</div>
+                    </div>`;
+            });
+            container.innerHTML = html + '</div>';
+        } catch(e) { container.innerHTML = "Xəta!"; }
+    }
 
-        function showSection(sect) {
-            document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item, .m-tab').forEach(i => i.classList.remove('active'));
-            document.getElementById(sect + '-pane').classList.add('active');
-            document.getElementById('d-nav-' + sect)?.classList.add('active');
-            document.getElementById('m-tab-' + sect)?.classList.add('active');
-            
-            const title = sect === 'orders' ? 'Sifarişlər' : 'Müştərilər';
-            document.getElementById('page-title').innerText = title;
-        }
-
-        function updateTotal() {
-            const a = parseInt(document.getElementById('count-active').innerText) || 0;
-            const d = parseInt(document.getElementById('count-done').innerText) || 0;
-            document.getElementById('count-total').innerText = a + d;
-        }
-
-        function adminLogout() { localStorage.clear(); window.location.replace("cabinet.html"); }
-        initAdmin();
-    </script>
+    initApp();
+</script>
 </body>
 </html>
