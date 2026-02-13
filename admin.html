@@ -36,6 +36,10 @@
         .stat-pill b { font-size: 14px; color: var(--navy); }
         .stat-pill span { font-size: 9px; text-transform: uppercase; font-weight: 800; color: var(--text-muted); }
 
+        .search-wrapper { margin-bottom: 15px; position: relative; }
+        .search-wrapper input { width: 100%; padding: 10px 15px 10px 35px; border-radius: 10px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; }
+        .search-wrapper i { position: absolute; left: 12px; top: 12px; color: var(--text-muted); font-size: 12px; }
+
         .table-card { background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.02); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #FDFDFD; padding: 14px 20px; text-align: left; font-size: 10px; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
@@ -45,20 +49,19 @@
         .seen { color: var(--success); font-weight: bold; margin-left: 5px; }
         .unseen { color: #CBD5E0; margin-left: 5px; }
 
+        .u-detail { font-size: 10px; color: var(--text-muted); display: block; margin-top: 2px; }
+
         select { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; background: #F9FAFB; }
         .btn-mini { border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
         .btn-save { background: var(--navy); color: white; padding: 7px 14px; font-weight: 700; font-size: 11px; }
         .btn-notif { background: white; color: var(--text-dark); width: 32px; height: 32px; font-size: 14px; border: 1px solid var(--border); transition: 0.2s; }
         .btn-history { background: #F1F5F9; color: var(--navy); padding: 5px 10px; font-size: 10px; font-weight: 700; margin-left: 5px; }
 
-        /* Modal */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 400px; border-radius: 15px; max-height: 75vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
         .history-item { padding: 12px; border-bottom: 1px solid #F8FAFC; display: flex; justify-content: space-between; align-items: center; }
-        .history-item small { display: block; color: var(--text-muted); font-size: 9px; margin-top: 4px; }
 
-        /* Masaüstü gizlətmə */
         #orders-list-mobile, #customers-list-mobile, .mobile-nav { display: none; }
 
         @media (max-width: 768px) {
@@ -67,11 +70,12 @@
             table { display: none; }
             #orders-list-mobile, #customers-list-mobile, .mobile-nav { display: flex; }
             #orders-list-mobile, #customers-list-mobile { flex-direction: column; }
-            .mobile-card { background: white; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); padding: 14px; }
-            .m-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; }
-            .m-footer { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F8FAFC; align-items: center; }
+            .mobile-card { background: white; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+            .m-info-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #F8FAFC; font-size: 11px; }
+            .m-header-name { color: var(--gold); font-weight: 800; font-size: 15px; margin-bottom: 10px; display: block; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+            .m-footer { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #F1F5F9; align-items: center; }
             .mobile-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid var(--border); padding: 12px 0 25px; z-index: 1000; justify-content: space-around; }
-            .m-tab { text-align: center; color: var(--text-muted); font-size: 9px; font-weight: 700; text-transform: uppercase; }
+            .m-tab { text-align: center; color: var(--text-muted); font-size: 9px; font-weight: 700; text-transform: uppercase; flex: 1; }
             .m-tab.active { color: var(--navy); }
             .m-tab i { display: block; font-size: 18px; margin-bottom: 4px; }
         }
@@ -113,7 +117,7 @@
         <div id="orders-pane" class="section-pane active">
             <div class="table-card">
                 <table>
-                    <thead><tr><th>İstifadəçi</th><th>Mağaza / Paket</th><th>Status</th><th>Son Bildiriş</th><th>İdarə</th></tr></thead>
+                    <thead><tr><th>Müştəri / Məlumat</th><th>Mağaza / Paket</th><th>Status</th><th>Son Bildiriş</th><th>İdarə</th></tr></thead>
                     <tbody id="orders-list-desktop"></tbody>
                 </table>
                 <div id="orders-list-mobile"></div>
@@ -121,9 +125,13 @@
         </div>
 
         <div id="customers-pane" class="section-pane">
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="custSearch" placeholder="İstifadəçi adına görə axtar..." onkeyup="filterCustomers()">
+            </div>
             <div class="table-card">
                 <table>
-                    <thead><tr><th>Müştəri Adı</th><th>Mağaza</th><th>Tarix</th><th>Mesajlar</th></tr></thead>
+                    <thead><tr><th>Müştəri Məlumatı</th><th>Mağaza</th><th>Tarix</th><th>İdarə</th></tr></thead>
                     <tbody id="customers-list-desktop"></tbody>
                 </table>
                 <div id="customers-list-mobile"></div>
@@ -148,141 +156,99 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        function getStatusMarkup(d, id, coll) {
+        let archiveData = [];
+
+        function getStatusMarkup(d) {
             if(!d.lastNotification) return '<span style="color:#CCC; font-size:10px;">Yoxdur</span>';
             const tick = d.notifSeen ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check unseen"></i>';
-            return `
-                <div style="display:flex; align-items:center;">
-                    <div class="last-msg-box">${d.lastNotification}</div>
-                    ${tick}
-                </div>`;
+            return `<div style="display:flex; align-items:center;"><div class="last-msg-box">${d.lastNotification}</div>${tick}</div>`;
         }
 
         function initAdmin() {
             db.collection("orders").onSnapshot(snap => {
                 const dList = document.getElementById("orders-list-desktop");
                 const mList = document.getElementById("orders-list-mobile");
+                
                 dList.innerHTML = ""; mList.innerHTML = "";
                 document.getElementById('count-active').innerText = snap.size;
                 updateTotal();
+                
                 snap.forEach(doc => {
                     const d = doc.data(); const id = doc.id;
-                    const stMarkup = getStatusMarkup(d, id, 'orders');
+                    const stMarkup = getStatusMarkup(d);
                     const options = `<option value="1" ${d.status==1?'selected':''}>Qəbul</option><option value="2" ${d.status==2?'selected':''}>Hazırlıq</option><option value="3" ${d.status==3?'selected':''}>Domain</option><option value="4" ${d.status==4?'selected':''}>Sistem</option><option value="5" ${d.status==5?'selected':''}>Bitir</option>`;
-                    
-                    dList.innerHTML += `<tr>
-                        <td><b style="color:var(--gold)">@${d.userNickname}</b></td>
-                        <td><b>${d.shopName}</b></td>
-                        <td><select id="status-d-${id}">${options}</select></td>
-                        <td>${stMarkup}</td>
-                        <td style="display:flex; gap:8px"><button class="btn-mini btn-save" onclick="updateStatus('${id}', 'd')">OK</button><button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button></td>
-                    </tr>`;
-                    
-                    mList.innerHTML += `<div class="mobile-card">
-                        <div class="m-header"><span>@${d.userNickname}</span><span>${d.shopName}</span></div>
-                        <div style="font-size:11px; margin-bottom:10px;">${stMarkup}</div>
-                        <div class="m-footer">
-                            <select id="status-m-${id}">${options}</select>
-                            <button class="btn-mini btn-save" onclick="updateStatus('${id}', 'm')">OK</button>
-                            <button class="btn-mini btn-notif" style="margin-left:auto" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button>
-                        </div>
-                    </div>`;
+                   
+                    dList.innerHTML += `<tr><td><b style="color:var(--gold)">@${d.userNickname}</b><span class="u-detail"><i class="fa-solid fa-phone"></i> ${d.phone || 'Yoxdur'}</span><span class="u-detail"><i class="fa-solid fa-envelope"></i> ${d.email || 'Yoxdur'}</span><span class="u-detail"><i class="fa-solid fa-cake-candles"></i> ${d.birthDate || 'Yoxdur'}</span></td><td><b>${d.shopName}</b><br><small>${d.packageType || 'Standart'}</small></td><td><select id="status-d-${id}">${options}</select></td><td>${stMarkup}</td><td style="display:flex; gap:8px"><button class="btn-mini btn-save" onclick="updateStatus('${id}', 'd')">OK</button><button class="btn-mini btn-history" style="background:#fff; border:1px solid var(--border)" onclick="viewHistory('${id}', 'orders')"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button></td></tr>`;
+                    mList.innerHTML += `<div class="mobile-card"><span class="m-header-name">@${d.userNickname}</span><div class="m-info-row"><span>Mağaza:</span> <span>${d.shopName}</span></div><div class="m-info-row"><span>Gmail:</span> <span>${d.email || '---'}</span></div><div class="m-info-row"><span>Doğum T.:</span> <span>${d.birthDate || '---'}</span></div><div style="margin:10px 0;">${stMarkup}</div><div class="m-footer"><select id="status-m-${id}" style="flex:1">${options}</select><button class="btn-mini btn-save" onclick="updateStatus('${id}', 'm')">OK</button><button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button></div></div>`;
                 });
             });
 
             db.collection("completed_orders").onSnapshot(snap => {
-                const dList = document.getElementById("customers-list-desktop");
-                const mList = document.getElementById("customers-list-mobile");
-                dList.innerHTML = ""; mList.innerHTML = "";
+                archiveData = [];
+                snap.forEach(doc => archiveData.push({id: doc.id, ...doc.data()}));
+                renderArchive(archiveData);
                 document.getElementById('count-done').innerText = snap.size;
                 updateTotal();
-                snap.forEach(doc => {
-                    const d = doc.data(); const id = doc.id;
-                    dList.innerHTML += `<tr>
-                        <td>@${d.userNickname}</td>
-                        <td><b>${d.shopName}</b></td>
-                        <td>${d.orderDate}</td>
-                        <td>
-                            <button class="btn-mini btn-history" onclick="viewHistory('${id}', 'completed_orders')">MESAJLAR</button> 
-                            <button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'completed_orders')"><i class="fa-regular fa-comment-dots"></i></button>
-                        </td>
-                    </tr>`;
-
-                    mList.innerHTML += `<div class="mobile-card">
-                        <div class="m-header"><span>@${d.userNickname}</span><span>${d.shopName}</span></div>
-                        <div class="m-footer">
-                             <button class="btn-mini btn-history" onclick="viewHistory('${id}', 'completed_orders')">TARİX</button>
-                             <button class="btn-mini btn-notif" style="margin-left:auto" onclick="sendMsg('${id}', 'completed_orders')"><i class="fa-regular fa-comment-dots"></i></button>
-                        </div>
-                    </div>`;
-                });
             });
+        }
+
+        function renderArchive(data) {
+            const dList = document.getElementById("customers-list-desktop");
+            const mList = document.getElementById("customers-list-mobile");
+            dList.innerHTML = ""; mList.innerHTML = "";
+            data.forEach(d => {
+                dList.innerHTML += `<tr><td><b>@${d.userNickname}</b><span class="u-detail">${d.phone || ''} | ${d.email || ''} | ${d.birthDate || ''}</span></td><td><b>${d.shopName}</b></td><td>${d.orderDate || '---'}</td><td style="display:flex; gap:8px"><button class="btn-mini btn-history" onclick="viewHistory('${d.id}', 'completed_orders')">MESAJLAR</button><button class="btn-mini btn-notif" onclick="sendMsg('${d.id}', 'completed_orders')"><i class="fa-regular fa-bell"></i></button></td></tr>`;
+                mList.innerHTML += `<div class="mobile-card" style="border-left: 4px solid var(--success);"><span class="m-header-name" style="color:var(--success)">@${d.userNickname}</span><div class="m-info-row"><span>Mağaza:</span> <span>${d.shopName}</span></div><div class="m-footer"><button class="btn-mini btn-history" onclick="viewHistory('${d.id}', 'completed_orders')" style="flex:1">TARİXÇƏ</button><button class="btn-mini btn-notif" onclick="sendMsg('${d.id}', 'completed_orders')"><i class="fa-regular fa-bell"></i></button></div></div>`;
+            });
+        }
+
+        function filterCustomers() {
+            const q = document.getElementById("custSearch").value.toLowerCase();
+            const filtered = archiveData.filter(item => item.userNickname.toLowerCase().includes(q));
+            renderArchive(filtered);
         }
 
         async function sendMsg(id, coll) {
             const msg = prompt("Müştəriyə bildiriş yazın:");
             if (!msg || msg.trim() === "") return;
             const now = Date.now();
-            try {
-                await db.collection(coll).doc(id).update({ lastNotification: msg, notifTime: now, notifSeen: false });
-                await db.collection(coll).doc(id).collection("messages").add({
-                    text: msg, time: now, timeFormatted: new Date().toLocaleString('az-AZ'), seen: false
-                });
-                alert("Göndərildi!");
-            } catch (e) { alert("Xəta: " + e.message); }
+            await db.collection(coll).doc(id).update({ lastNotification: msg, notifTime: now, notifSeen: false });
+            await db.collection(coll).doc(id).collection("messages").add({ 
+                text: msg, 
+                time: now, 
+                sender: 'admin', 
+                timeFormatted: new Date().toLocaleString('az-AZ'), 
+                seen: false 
+            });
         }
 
         async function viewHistory(id, coll) {
             const body = document.getElementById("history-body");
             body.innerHTML = "Yüklənir...";
             document.getElementById("historyModal").style.display = "block";
-            try {
-                const snap = await db.collection(coll).doc(id).collection("messages").orderBy("time", "desc").get();
-                if(snap.empty) { body.innerHTML = "Mesaj yoxdur."; return; }
-                body.innerHTML = "";
-                snap.forEach(doc => {
-                    const m = doc.data();
-                    const tick = m.seen ? '<i class="fa-solid fa-check-double" style="color:#10B981"></i>' : '<i class="fa-solid fa-check" style="color:#CBD5E0"></i>';
-                    body.innerHTML += `
-                        <div class="history-item">
-                            <div style="flex:1; padding-right:10px;">${m.text}<small>${m.timeFormatted}</small></div>
-                            <div>${tick}</div>
-                        </div>`;
-                });
-            } catch(e) { body.innerHTML = "Xəta!"; }
+            const snap = await db.collection(coll).doc(id).collection("messages").orderBy("time", "desc").get();
+            body.innerHTML = snap.empty ? "Mesaj yoxdur." : "";
+            snap.forEach(doc => {
+                const m = doc.data();
+                const side = m.sender === 'admin' ? 'color:var(--navy); font-weight:bold;' : 'color:var(--gold);';
+                const tick = m.seen ? '<i class="fa-solid fa-check-double" style="color:#10B981"></i>' : '<i class="fa-solid fa-check" style="color:#CBD5E0"></i>';
+                body.innerHTML += `<div class="history-item"><div style="flex:1"><span style="${side}">${m.sender === 'admin' ? 'Siz: ' : 'Müştəri: '}</span>${m.text}<br><small style="font-size:9px; color:#94A3B8">${m.timeFormatted || ''}</small></div><div>${tick}</div></div>`;
+            });
         }
 
         function closeHistory() { document.getElementById("historyModal").style.display = "none"; }
+
         async function updateStatus(id, type) {
             const selectEl = document.getElementById(`status-${type}-${id}`);
             const v = parseInt(selectEl.value);
-            
-            try {
-                if(v === 5) {
-                    // Bitir seçilərsə arxivə köçür
-                    const ref = await db.collection("orders").doc(id).get();
-                    if (!ref.exists) return;
-                    
-                    await db.collection("completed_orders").doc(id).set({...ref.data(), status: 5});
-                    const msgs = await db.collection("orders").doc(id).collection("messages").get();
-                    
-                    for (const m of msgs.docs) {
-                        await db.collection("completed_orders").doc(id).collection("messages").doc(m.id).set(m.data());
-                    }
-                    await db.collection("orders").doc(id).delete();
-                    alert("Sifariş arxivə köçürüldü!");
-                } else {
-                    // Status yenilənir
-                    await db.collection("orders").doc(id).update({ status: v });
-                    
-                    // Vizual olaraq istifadəçiyə bildirmək üçün kiçik effekt
-                    selectEl.style.borderColor = "var(--success)";
-                    setTimeout(() => { selectEl.style.borderColor = "var(--border)"; }, 1000);
-                }
-            } catch (e) { 
-                console.error("Xəta:", e);
-                alert("Xəta baş verdi!"); 
-            }
+            if(v === 5) {
+                if(!confirm("Sifarişi arxivləmək istəyirsiniz?")) return;
+                const ref = await db.collection("orders").doc(id).get();
+                await db.collection("completed_orders").doc(id).set({...ref.data(), status: 5});
+                const msgs = await db.collection("orders").doc(id).collection("messages").get();
+                for (const m of msgs.docs) await db.collection("completed_orders").doc(id).collection("messages").doc(m.id).set(m.data());
+                await db.collection("orders").doc(id).delete();
+            } else { await db.collection("orders").doc(id).update({status: v}); }
         }
 
         function showSection(sect) {
@@ -291,9 +257,8 @@
             document.getElementById(sect + '-pane').classList.add('active');
             document.getElementById('d-nav-' + sect)?.classList.add('active');
             document.getElementById('m-tab-' + sect)?.classList.add('active');
-            
-            const title = sect === 'orders' ? 'Sifarişlər' : 'Müştərilər';
-            document.getElementById('page-title').innerText = title;
+            const titles = { orders: 'Sifarişlər', customers: 'Müştərilər' };
+            document.getElementById('page-title').innerText = titles[sect];
         }
 
         function updateTotal() {
