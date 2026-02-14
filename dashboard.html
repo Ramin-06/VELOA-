@@ -81,13 +81,71 @@
 
         /* Notifs */
         .notif-dropdown { position: absolute; top: 50px; right: 0; width: 280px; background: white; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 15px 40px rgba(0,0,0,0.1); display: none; z-index: 2000; }
-        .notif-item { padding: 15px; border-bottom: 1px solid var(--border); }
+        .notif-item { 
+    padding: 15px; 
+    border-bottom: 1px solid var(--border); 
+    word-wrap: break-word; /* Uzun linkləri alt sətirə keçirir */
+    overflow-wrap: break-word; 
+}
+
+.notif-item a {
+    color: var(--gold);
+    text-decoration: underline;
+    font-weight: 600;
+}
 
         .hidden { display: none !important; }
 
         @media (max-width: 400px) {
             .card-code { font-size: 16px; letter-spacing: 0.5px; }
         }
+
+/* Bildiriş gələndə zəng düyməsinin dairəsi tam qırmızı olur */
+.notif-active {
+    background: #EF4444 !important; /* Arxa fon qırmızı */
+    border-color: #EF4444 !important; /* Kənar xətt qırmızı */
+}
+
+/* Zəng düyməsinin dairəsi qırmızı olur */
+.notif-active {
+    background: #EF4444 !important;
+    border-color: #EF4444 !important;
+}
+
+/* Zəng ikonunun özü ağ olur və titrəyir */
+.notif-active i {
+    color: white !important;
+    animation: bell-ring 0.6s ease-in-out infinite;
+}
+
+.notif-active {
+    background: #EF4444 !important;
+    border-color: #EF4444 !important;
+}
+
+.notif-active i {
+    color: white !important; /* Zəngin özü ağ qalır ki qırmızı fonda görünsün */
+    animation: bell-ring 0.6s ease-in-out infinite;
+}
+
+@keyframes bell-ring {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(15deg); }
+    75% { transform: rotate(-15deg); }
+}
+
+
+.nav-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
     </style>
 </head>
 <body>
@@ -95,6 +153,11 @@
 <nav class="top-nav">
     <div class="logo">VELO<span>AI</span></div>
     <div class="nav-right">
+        <div class="user-info" style="text-align: right; margin-right: 10px;">
+            <div id="u-fullname" style="font-weight: 800; font-size: 13px; color: var(--navy); line-height: 1.2;">Yüklənir...</div>
+            <div id="u-nickname" style="font-size: 10px; color: var(--text-light); font-weight: 500;">@nickname</div>
+        </div>
+
         <div class="icon-btn" onclick="toggleNotifs(event)">
             <i class="fa-regular fa-bell"></i>
             <div class="notif-badge" id="notif-badge"></div>
@@ -141,6 +204,17 @@
         </div>
         <p id="st-label" style="font-weight:800; color:var(--gold); font-size:12px;"></p>
     </div>
+
+    <div style="margin-top: 20px;">
+        <div style="font-size: 11px; color: var(--text-light); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-left: 5px;">
+            Dəstək
+        </div>
+        <button class="main-btn" onclick="window.location.href='support.html'" style="background: #1E293B; box-shadow: 0 10px 20px rgba(30, 41, 59, 0.15); display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <i class="fa-solid fa-headset"></i> 
+        Adminə Müraciət Et
+        </button>
+    </div>
+
 </div>
 
 <div id="chat-modal">
@@ -176,18 +250,60 @@
     let msgUnsub = null;
 
     function initApp() {
-        if(!activeUser) { window.location.replace("cabinet.html"); return; }
-        db.collection("orders").doc(activeUser).onSnapshot(doc => {
-            if(doc.exists) {
-                showView('status');
-                renderStatusUI(doc.data());
-                listenToMessages("orders");
+    if(!activeUser) { window.location.replace("cabinet.html"); return; }
+    loadUserDetails();
+
+    // Sifariş statusunu izləyirik (Burada orders-ə toxunmuruq)
+    db.collection("orders").doc(activeUser).onSnapshot(doc => {
+        if(doc.exists) {
+            showView('status');
+            renderStatusUI(doc.data());
+        } else {
+            // Əgər sifariş yoxdursa, BURA İŞLƏYƏCƏK və ekran dəyişməyəcək!
+            showView('welcome'); 
+        }
+    });
+
+    // MÜTLƏQ: Mesajları 'users' kolleksiyasından dinləyirik
+    // Bu, orders-də sifariş olub-olmamasından asılı deyil!
+    listenToMessages("users"); 
+}
+    
+    async function loadUserDetails() {
+    if (!activeUser) return;
+
+    try {
+        const userDoc = await db.collection("users").doc(activeUser).get();
+        
+        const fullNameElement = document.getElementById('u-fullname');
+        const nickNameElement = document.getElementById('u-nickname');
+
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            
+            // Həm 'fullName' (N böyük), həm 'fullname' (hamısı kiçik) ehtimalını yoxlayırıq
+            const adSoyad = userData.fullName || userData.fullname || "";
+            
+            if (adSoyad) {
+                fullNameElement.innerText = adSoyad;
             } else {
-                showView('welcome');
-                listenToMessages("completed_orders");
+                // Əgər bazada bu sahə boşdursa, nickname-i yaz
+                fullNameElement.innerText = activeUser;
             }
-        });
+            
+            nickNameElement.innerText = "@" + activeUser;
+        } else {
+            // İstifadəçi sənədi tapılmazsa
+            fullNameElement.innerText = activeUser;
+            nickNameElement.innerText = "@" + activeUser;
+        }
+    } catch (error) {
+        console.error("Məlumat gətirilərkən xəta:", error);
     }
+}
+
+// initApp funksiyasının sonunda bu funksiyanı çağır
+loadUserDetails();
 
     function showView(v) {
         document.getElementById('welcome-ui').classList.toggle('hidden', v !== 'welcome');
@@ -261,28 +377,65 @@ function openChat() {
     }
 
     function listenToMessages(coll) {
-        if(msgUnsub) msgUnsub();
-        msgUnsub = db.collection(coll).doc(activeUser).collection("messages").orderBy("time", "desc").onSnapshot(snap => {
-            const list = document.getElementById('notif-list'), badge = document.getElementById('notif-badge');
-            const deleted = JSON.parse(localStorage.getItem("deletedNotifs") || "[]");
-            let count = 0, html = "";
-            snap.forEach(doc => {
-                const m = doc.data();
-                if(!deleted.includes(doc.id) && m.seen === false) {
-                    count++;
-                    html += `<div class="notif-item">
-                        <span style="font-size:12px; color:var(--navy)">${m.text}</span>
-                        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
-                            <i class="fa-regular fa-copy" style="cursor:pointer; color:#999" onclick="copyText('${m.text}')"></i>
-                            <i class="fa-solid fa-check" style="cursor:pointer; color:#10B981" onclick="removeNotif('${doc.id}', '${coll}')"></i>
-                        </div>
-                    </div>`;
-                }
-            });
-            badge.style.display = count > 0 ? 'block' : 'none';
-            list.innerHTML = count > 0 ? html : '<p style="padding:20px; color:#999; text-align:center; font-size:11px;">Bildiriş yoxdur.</p>';
+    if(msgUnsub) msgUnsub();
+    
+    msgUnsub = db.collection(coll).doc(activeUser).collection("messages").orderBy("time", "desc").onSnapshot(snap => {
+        const list = document.getElementById('notif-list');
+        const badge = document.getElementById('notif-badge');
+        const bellBtn = document.querySelector('.icon-btn[onclick*="toggleNotifs"]');
+        
+        const deleted = JSON.parse(localStorage.getItem("deletedNotifs") || "[]");
+        let count = 0, html = "";
+
+        const linkify = (text) => {
+            if(!text) return "";
+            const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+            return text.replace(urlPattern, '<a href="$1" target="_blank" style="color:#D4AF37; text-decoration:underline; font-weight:bold;">$1</a>');
+        };
+
+        snap.forEach(doc => {
+            const m = doc.data();
+            if(!deleted.includes(doc.id) && m.seen !== true) {
+                count++;
+                const formattedText = linkify(m.text);
+
+                // İkonlara birbaşa qırmızı rəngi və ölçünü tətbiq edirik
+                html += `
+                <div class="notif-item" style="padding:15px; border-bottom:1px solid var(--border); background: #ffffff;">
+                    <span style="font-size:12px; color:#0F172A; display:block; margin-bottom:12px; word-break:break-all;">${formattedText}</span>
+                    <div style="display:flex; justify-content:flex-end; gap:25px; align-items:center;">
+                        <i class="fa-regular fa-copy" 
+                           onclick="copyText('${m.text}')" 
+                           style="cursor:pointer !important; font-size:20px !important; color:#EF4444 !important; display:inline-block !important;"></i>
+                        <i class="fa-solid fa-check" 
+                           onclick="removeNotif('${doc.id}', '${coll}')" 
+                           style="cursor:pointer !important; font-size:20px !important; color:#EF4444 !important; display:inline-block !important;"></i>
+                    </div>
+                </div>`;
+            }
         });
-    }
+
+        if(count > 0) {
+            badge.style.display = 'block';
+            if(bellBtn) {
+                bellBtn.style.backgroundColor = "#EF4444";
+                bellBtn.style.borderColor = "#EF4444";
+                const icon = bellBtn.querySelector('i');
+                if(icon) icon.style.color = "#FFFFFF";
+            }
+        } else {
+            badge.style.display = 'none';
+            if(bellBtn) {
+                bellBtn.style.backgroundColor = "";
+                bellBtn.style.borderColor = "";
+                const icon = bellBtn.querySelector('i');
+                if(icon) icon.style.color = "";
+            }
+        }
+
+        list.innerHTML = count > 0 ? html : '<p style="padding:20px; color:#999; text-align:center; font-size:11px;">Bildiriş yoxdur.</p>';
+    });
+}
 
     async function removeNotif(id, coll) {
         const deleted = JSON.parse(localStorage.getItem("deletedNotifs") || "[]");
