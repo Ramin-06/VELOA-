@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VELO AI | Elite Support</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --navy: #0F172A;
+            --gold: #D4AF37;
+            --bg: #F8FAFC;
+            --white: #ffffff;
+            --border: #E2E8F0;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            padding: 15px;
+        }
+
+        .premium-container {
+            background: var(--white);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 35px;
+            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.1);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .header h2 { font-weight: 800; font-size: 24px; color: var(--navy); margin-bottom: 8px; }
+        .header p { color: #64748B; font-size: 13px; margin-bottom: 25px; }
+
+        /* Form Styling */
+        .form-stack { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        input, textarea {
+            width: 100%;
+            border: 1.5px solid #F1F5F9;
+            border-radius: 16px;
+            padding: 14px 18px;
+            font-family: inherit;
+            font-size: 14px;
+            background: #F8FAFC;
+            transition: 0.3s;
+            color: var(--navy);
+        }
+
+        input:focus, textarea:focus { border-color: var(--gold); background: white; }
+        textarea { height: 130px; resize: none; }
+
+        .elite-btn {
+            width: 100%;
+            background: var(--navy);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 18px;
+            font-weight: 800;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        /* Success View */
+        #success-view { display: none; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
+        
+        .ticket-id-badge {
+            background: #FDF9EC;
+            color: var(--gold);
+            padding: 12px 30px;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: 800;
+            margin: 20px 0;
+            border: 1px dashed var(--gold);
+        }
+
+        .back-home-btn {
+            background: var(--gold);
+            color: white;
+            text-decoration: none;
+            padding: 18px 40px;
+            border-radius: 18px;
+            font-weight: 800;
+            width: 100%;
+            display: block;
+            margin-top: 15px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .hidden { display: none !important; }
+
+        @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="premium-container">
+    <div id="form-view">
+        <div class="header">
+            <h2>Müraciət Göndər</h2>
+            <p>Admin panelə birbaşa sorğu göndərin.</p>
+        </div>
+        
+        <div class="form-stack">
+            <div class="form-row">
+                <input type="text" id="fName" placeholder="Adınız">
+                <input type="text" id="lName" placeholder="Soyadınız">
+            </div>
+            <input type="email" id="email" placeholder="Email ünvanınız">
+            <input type="tel" id="phone" placeholder="Telefon nömrəniz">
+            <textarea id="msgInput" placeholder="Mesajınızı ətraflı qeyd edin..."></textarea>
+            
+            <button class="elite-btn" id="sendBtn" onclick="submitTicket()">
+                Sorğunu Göndər <i class="fa-solid fa-paper-plane"></i>
+            </button>
+            
+            <a href="dashboard.html" style="display:block; text-align:center; margin-top:15px; color:#94A3B8; text-decoration:none; font-size:12px; font-weight:700;">
+                <i class="fa-solid fa-xmark"></i> İmtina et
+            </a>
+        </div>
+    </div>
+
+    <div id="success-view">
+        <div style="font-size: 50px; color: #10B981; margin-bottom: 15px;"><i class="fa-solid fa-circle-check"></i></div>
+        <h2 style="color:var(--navy); margin:0;">Müraciətiniz Alındı!</h2>
+        <p style="color:#64748B; font-size:14px; margin-top:8px;">Admin bu nömrəyə əsasən cavab verəcək:</p>
+        
+        <div class="ticket-id-badge" id="ticketIDDisplay">#00000</div>
+        
+        <p style="font-size:12px; color:#94A3B8; line-height:1.6; padding:0 10px;">
+            Cavab gəldikdə Dashboard-dakı zəng işarəsi qırmızı olacaq.
+        </p>
+
+        <a href="dashboard.html" class="back-home-btn">Dashboard-a Qayıt</a>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA5eb16DAKSVLkEzYsUrgxL9vfrJP7w-es",
+        authDomain: "etir-magazasi-d7679.firebaseapp.com",
+        projectId: "etir-magazasi-d7679",
+        storageBucket: "etir-magazasi-d7679.firebasestorage.app",
+        messagingSenderId: "1045258773680",
+        appId: "1:1045258773680:web:ab2edd54ba3f0ef0530775"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const activeUser = localStorage.getItem("activeUser");
+
+    async function submitTicket() {
+        const data = {
+            f: document.getElementById('fName').value.trim(),
+            l: document.getElementById('lName').value.trim(),
+            e: document.getElementById('email').value.trim(),
+            p: document.getElementById('phone').value.trim(),
+            m: document.getElementById('msgInput').value.trim()
+        };
+
+        if(!data.f || !data.m || !data.p) return alert("Ad, Telefon və Mesaj mütləqdir!");
+
+        const btn = document.getElementById('sendBtn');
+        btn.disabled = true;
+        btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Göndərilir...";
+
+        // AVTOMATİK TİCKET ID YARATMA (Random 5 rəqəmli)
+        const generatedID = Math.floor(10000 + Math.random() * 90000);
+
+        try {
+            // Firestore-da həm Admin görəcək, həm də nömrə bazada qalacaq
+            await db.collection("inbox").add({
+                ticketID: generatedID,
+                username: activeUser || "Qonaq",
+                fullName: data.f + " " + data.l,
+                email: data.e,
+                phone: data.p,
+                message: data.m,
+                time: firebase.firestore.FieldValue.serverTimestamp(),
+                status: "unread"
+            });
+
+            // Ekran dəyişdirilir
+            document.getElementById('form-view').classList.add('hidden');
+            document.getElementById('success-view').style.display = 'flex';
+            document.getElementById('ticketIDDisplay').innerText = "#" + generatedID;
+            
+        } catch (e) {
+            alert("Xəta baş verdi!");
+            btn.disabled = false;
+            btn.innerHTML = "Sorğunu Göndər <i class='fa-solid fa-paper-plane'></i>";
+        }
+    }
+</script>
+</body>
+</html>
