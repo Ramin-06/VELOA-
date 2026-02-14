@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VELO AI | Admin Panel</title>
+    <title>VELO AI | Admin Premium</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -94,7 +94,7 @@
 .badge-count {
     background: #EF4444;
     color: white;
-    font-size: 10px;
+    font-size: 8px;
     padding: 2px 7px;
     border-radius: 20px;
     margin-left: 8px;
@@ -106,6 +106,10 @@
 
 
 /* Veb versiyada aşağıdakı artıq sətirləri (mobil kartları) tam gizlət */
+/* Oxunmamış müraciət satırı */
+.unread-row { background-color: #FFFDF5 !important; }
+
+/* Veb versiyada mobil kartları gizlət */
 #inbox-list-mobile {
     display: none !important;
 }
@@ -129,6 +133,28 @@
     cursor: not-allowed !important;
     opacity: 0.7;
     border: none;
+}
+
+
+/* Yalnız mobil menyudakı ikon üzərindəki rəqəm üçün */
+.badge-mobile-mini {
+    position: absolute;
+    top: -4px;        /* İkondan yuxarı məsafə */
+    right: -6px;      /* İkondan sağa məsafə */
+    background: #EF4444;
+    color: white;
+    font-size: 8px;   /* Çox kiçik və zərif font */
+    font-weight: 800;
+    min-width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid white; /* İkonla qarışmaması üçün ağ haşiyə */
+    padding: 0;
+    line-height: 1;
+    z-index: 5;
 }
     </style>
 </head>
@@ -203,10 +229,16 @@
     </div>
 
     <div class="mobile-nav">
-        <div class="m-tab active" id="m-tab-orders" onclick="showSection('orders')"><i class="fa-solid fa-list"></i>Sifariş</div>
-        <div class="m-tab" id="m-tab-customers" onclick="showSection('customers')"><i class="fa-solid fa-user-group"></i>Müştəri</div>
-        <div class="m-tab" id="m-tab-inbox" onclick="showSection('inbox')"><i class="fa-solid fa-inbox"></i>Inbox</div>
+    <div class="m-tab active" id="m-tab-orders" onclick="showSection('orders')"><i class="fa-solid fa-list"></i>Sifariş</div>
+    <div class="m-tab" id="m-tab-customers" onclick="showSection('customers')"><i class="fa-solid fa-user-group"></i>Müştəri</div>
+    <div class="m-tab" id="m-tab-inbox" onclick="showSection('inbox')">
+        <div style="position: relative; display: inline-block;">
+            <i class="fa-solid fa-inbox"></i>
+            <span id="inbox-badge-mobile" class="badge-mobile-mini" style="display:none">0</span>
+        </div>
+        <div style="font-size: 9px;">Inbox</div>
     </div>
+</div>
 
     <script>
         const firebaseConfig = {
@@ -369,7 +401,6 @@ function initInbox() {
     db.collection("inbox").orderBy("time", "desc").onSnapshot(snap => {
         const dList = document.getElementById("inbox-list-desktop");
         const mList = document.getElementById("inbox-list-mobile");
-        const badge = document.getElementById("inbox-badge");
         let unreadCount = 0;
         
         dList.innerHTML = ""; 
@@ -378,51 +409,53 @@ function initInbox() {
         snap.forEach(doc => {
             const d = doc.data(); 
             const id = doc.id;
-            
             if(d.status === "unread") unreadCount++;
             
-            // Status yoxlanışı: Cavablanıbsa deaktiv et
             const isReplied = (d.status === "replied");
             const btnText = isReplied ? "CAVABLANDI" : "CAVABLA";
             const btnClass = isReplied ? "btn-mini btn-disabled" : "btn-mini btn-save";
             const btnAttr = isReplied ? "disabled" : "";
 
-            // Desktop sətiri (Veb üçün)
             dList.innerHTML += `
                 <tr class="${d.status === 'unread' ? 'unread-row' : ''}" style="${isReplied ? 'opacity: 0.8;' : ''}">
                     <td><b style="color:var(--gold)">#${d.ticketID}</b><br><small>@${d.username}</small></td>
                     <td class="msg-text-cell">${d.message}</td>
                     <td><small>${d.phone}<br>${d.email || ''}</small></td>
                     <td><small>${d.date || '---'}</small></td>
-                    <td>
-                        <button class="${btnClass}" 
-                                onclick="replyInbox('${id}', '${d.username}', '${d.ticketID}')" 
-                                ${btnAttr}>
-                            ${btnText}
-                        </button>
-                    </td>
+                    <td><button class="${btnClass}" onclick="replyInbox('${id}', '${d.username}', '${d.ticketID}')" ${btnAttr}>${btnText}</button></td>
                 </tr>`;
 
-            // Mobil kartı (Yalnız mobildə görünəcək)
             mList.innerHTML += `
                 <div class="mobile-card">
                     <span class="m-header-name">#${d.ticketID} - @${d.username}</span>
                     <div style="font-size:12px; margin:8px 0; word-break:break-word;">${d.message}</div>
                     <div class="m-info-row"><span>Tel:</span> <span>${d.phone}</span></div>
                     <div class="m-footer">
-                        <button class="${btnClass}" style="width:100%"
-                                onclick="replyInbox('${id}', '${d.username}', '${d.ticketID}')" 
-                                ${btnAttr}>
-                            ${btnText}
-                        </button>
+                        <button class="${btnClass}" style="width:100%" onclick="replyInbox('${id}', '${d.username}', '${d.ticketID}')" ${btnAttr}>${btnText}</button>
                     </div>
                 </div>`;
         });
 
-        if(badge) {
-            badge.style.display = unreadCount > 0 ? "inline-block" : "none";
-            badge.innerText = unreadCount;
-        }
+        // initInbox funksiyasının içindəki snap.forEach-dən sonra:
+const mobileBadge = document.getElementById("inbox-badge-mobile");
+const desktopBadge = document.getElementById("inbox-badge"); // Sidebar üçün
+
+if (unreadCount > 0) {
+    // Mobildə rəqəmi göstər və yenilə
+    if (mobileBadge) {
+        mobileBadge.innerText = unreadCount;
+        mobileBadge.style.display = "flex";
+    }
+    // Sidebar (Veb) üçün (əgər istəsəniz qalsın)
+    if (desktopBadge) {
+        desktopBadge.innerText = unreadCount;
+        desktopBadge.style.display = "inline-block";
+    }
+} else {
+    // Mesaj yoxdursa hər ikisini gizlət
+    if (mobileBadge) mobileBadge.style.display = "none";
+    if (desktopBadge) desktopBadge.style.display = "none";
+}
     });
 }
 
