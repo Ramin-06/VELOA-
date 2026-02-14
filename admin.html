@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VELO AI | Admin Premium</title>
+    <title>VELO AI | Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -82,6 +82,54 @@
 
         .section-pane { display: none; }
         .section-pane.active { display: block; }
+
+/* Mesajların daşmaması üçün düzəliş */
+.last-msg-box, .msg-text-cell { 
+    word-break: break-all; 
+    overflow-wrap: break-word; 
+    max-width: 200px; 
+}
+
+/* Sidebar-da yeni bildiriş sayı nişanı */
+.badge-count {
+    background: #EF4444;
+    color: white;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-left: 8px;
+    font-weight: 800;
+}
+
+/* Oxunmamış müraciət satırı */
+.unread-row { background-color: #FFFDF5 !important; }
+
+
+/* Veb versiyada aşağıdakı artıq sətirləri (mobil kartları) tam gizlət */
+#inbox-list-mobile {
+    display: none !important;
+}
+
+/* Yalnız ekran kiçik olanda cədvəli gizlət, kartları göstər */
+@media (max-width: 768px) {
+    #inbox-list-desktop, 
+    .table-card table { 
+        display: none !important; 
+    }
+    #inbox-list-mobile { 
+        display: flex !important; 
+        flex-direction: column;
+    }
+}
+
+/* Deaktiv düymə üçün xüsusi stil */
+.btn-disabled {
+    background: #94A3B8 !important;
+    color: white !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+    border: none;
+}
     </style>
 </head>
 <body>
@@ -100,6 +148,9 @@
         <h2>VELO AI</h2>
         <div class="nav-item active" id="d-nav-orders" onclick="showSection('orders')"><i class="fa-solid fa-list-check" style="margin-right:10px"></i> Sifarişlər</div>
         <div class="nav-item" id="d-nav-customers" onclick="showSection('customers')"><i class="fa-solid fa-users" style="margin-right:10px"></i> Müştərilər</div>
+        <div class="nav-item" id="d-nav-inbox" onclick="showSection('inbox')">
+    <i class="fa-solid fa-envelope-open-text" style="margin-right:10px"></i> Müraciətlər <span id="inbox-badge" class="badge-count" style="display:none">0</span>
+</div>
     </div>
 
     <div class="main">
@@ -125,23 +176,36 @@
         </div>
 
         <div id="customers-pane" class="section-pane">
-            <div class="search-wrapper">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="custSearch" placeholder="İstifadəçi adına görə axtar..." onkeyup="filterCustomers()">
-            </div>
-            <div class="table-card">
-                <table>
-                    <thead><tr><th>Müştəri Məlumatı</th><th>Mağaza</th><th>Tarix</th><th>İdarə</th></tr></thead>
-                    <tbody id="customers-list-desktop"></tbody>
-                </table>
-                <div id="customers-list-mobile"></div>
-            </div>
-        </div>
+    <div class="search-wrapper">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="custSearch" placeholder="İstifadəçi adına görə axtar..." onkeyup="filterCustomers()">
+    </div>
+    <div class="table-card">
+        <table>
+            <thead><tr><th>Müştəri Məlumatı</th><th>Mağaza</th><th>Tarix</th><th>İdarə</th></tr></thead>
+            <tbody id="customers-list-desktop"></tbody>
+        </table>
+        <div id="customers-list-mobile"></div>
+    </div>
+</div>
+
+        <div id="inbox-pane" class="section-pane">
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr><th>Ticket / İstifadəçi</th><th>Mesaj</th><th>Əlaqə</th><th>Tarix</th><th>İdarə</th></tr>
+            </thead>
+            <tbody id="inbox-list-desktop"></tbody>
+        </table>
+        <div id="inbox-list-mobile"></div>
+    </div>
+</div>
     </div>
 
     <div class="mobile-nav">
         <div class="m-tab active" id="m-tab-orders" onclick="showSection('orders')"><i class="fa-solid fa-list"></i>Sifariş</div>
         <div class="m-tab" id="m-tab-customers" onclick="showSection('customers')"><i class="fa-solid fa-user-group"></i>Müştəri</div>
+        <div class="m-tab" id="m-tab-inbox" onclick="showSection('inbox')"><i class="fa-solid fa-inbox"></i>Inbox</div>
     </div>
 
     <script>
@@ -159,10 +223,18 @@
         let archiveData = [];
 
         function getStatusMarkup(d) {
-            if(!d.lastNotification) return '<span style="color:#CCC; font-size:10px;">Yoxdur</span>';
-            const tick = d.notifSeen ? '<i class="fa-solid fa-check-double seen"></i>' : '<i class="fa-solid fa-check unseen"></i>';
-            return `<div style="display:flex; align-items:center;"><div class="last-msg-box">${d.lastNotification}</div>${tick}</div>`;
-        }
+    if(!d.lastNotification) return '<span style="color:#CCC; font-size:10px;">Yoxdur</span>';
+    
+    // notifSeen false olanda tək tik, true olanda cüt yaşıl tik
+    const tick = d.notifSeen ? 
+        '<i class="fa-solid fa-check-double seen"></i>' : 
+        '<i class="fa-solid fa-check unseen"></i>';
+        
+    return `<div style="display:flex; align-items:center;">
+                <div class="last-msg-box">${d.lastNotification}</div>
+                ${tick}
+            </div>`;
+}
 
         function initAdmin() {
             db.collection("orders").onSnapshot(snap => {
@@ -209,18 +281,17 @@
         }
 
         async function sendMsg(id, coll) {
-            const msg = prompt("Müştəriyə bildiriş yazın:");
-            if (!msg || msg.trim() === "") return;
-            const now = Date.now();
-            await db.collection(coll).doc(id).update({ lastNotification: msg, notifTime: now, notifSeen: false });
-            await db.collection(coll).doc(id).collection("messages").add({ 
-                text: msg, 
-                time: now, 
-                sender: 'admin', 
-                timeFormatted: new Date().toLocaleString('az-AZ'), 
-                seen: false 
-            });
-        }
+    const docRef = await db.collection(coll).doc(id).get();
+    if (!docRef.exists) return alert("Müştəri tapılmadı!");
+    
+    const username = docRef.data().userNickname;
+    const msg = prompt(`@${username} üçün bildiriş yazın:`);
+    
+    if (msg) {
+        const success = await universalSender(username, msg);
+        if (success) alert("Bildiriş müştəriyə çatdırıldı!");
+    }
+}
 
         async function viewHistory(id, coll) {
             const body = document.getElementById("history-body");
@@ -252,14 +323,38 @@
         }
 
         function showSection(sect) {
-            document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item, .m-tab').forEach(i => i.classList.remove('active'));
-            document.getElementById(sect + '-pane').classList.add('active');
-            document.getElementById('d-nav-' + sect)?.classList.add('active');
-            document.getElementById('m-tab-' + sect)?.classList.add('active');
-            const titles = { orders: 'Sifarişlər', customers: 'Müştərilər' };
-            document.getElementById('page-title').innerText = titles[sect];
-        }
+    // 1. Bütün panelləri gizlə
+    document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
+    
+    // 2. Bütün menyu düymələrindən (Veb və Mobil) aktivlik rəngini sil
+    document.querySelectorAll('.nav-item, .m-tab').forEach(i => i.classList.remove('active'));
+    
+    // 3. Seçilən paneli göstər
+    const targetPane = document.getElementById(sect + '-pane');
+    if (targetPane) {
+        targetPane.classList.add('active');
+    }
+
+    // 4. Veb menyuda rəngi aktiv et
+    const desktopNav = document.getElementById('d-nav-' + sect);
+    if (desktopNav) {
+        desktopNav.classList.add('active');
+    }
+
+    // 5. Mobil menyuda rəngi aktiv et
+    const mobileNav = document.getElementById('m-tab-' + sect);
+    if (mobileNav) {
+        mobileNav.classList.add('active');
+    }
+    
+    // 6. Yuxarıdakı başlığı dəyiş
+    const titles = { 
+        orders: 'Sifarişlər', 
+        customers: 'Müştərilər', 
+        inbox: 'Müraciətlər' 
+    };
+    document.getElementById('page-title').innerText = titles[sect] || 'Panel';
+}
 
         function updateTotal() {
             const a = parseInt(document.getElementById('count-active').innerText) || 0;
@@ -268,7 +363,164 @@
         }
 
         function adminLogout() { localStorage.clear(); window.location.replace("cabinet.html"); }
-        initAdmin();
+        
+        // 1. Inbox Məlumatlarını Real-vaxtda Dinləmək
+function initInbox() {
+    db.collection("inbox").orderBy("time", "desc").onSnapshot(snap => {
+        const dList = document.getElementById("inbox-list-desktop");
+        const mList = document.getElementById("inbox-list-mobile");
+        const badge = document.getElementById("inbox-badge");
+        let unreadCount = 0;
+        
+        dList.innerHTML = ""; 
+        mList.innerHTML = "";
+        
+        snap.forEach(doc => {
+            const d = doc.data(); 
+            const id = doc.id;
+            
+            if(d.status === "unread") unreadCount++;
+            
+            // Status yoxlanışı: Cavablanıbsa deaktiv et
+            const isReplied = (d.status === "replied");
+            const btnText = isReplied ? "CAVABLANDI" : "CAVABLA";
+            const btnClass = isReplied ? "btn-mini btn-disabled" : "btn-mini btn-save";
+            const btnAttr = isReplied ? "disabled" : "";
+
+            // Desktop sətiri (Veb üçün)
+            dList.innerHTML += `
+                <tr class="${d.status === 'unread' ? 'unread-row' : ''}" style="${isReplied ? 'opacity: 0.8;' : ''}">
+                    <td><b style="color:var(--gold)">#${d.ticketID}</b><br><small>@${d.username}</small></td>
+                    <td class="msg-text-cell">${d.message}</td>
+                    <td><small>${d.phone}<br>${d.email || ''}</small></td>
+                    <td><small>${d.date || '---'}</small></td>
+                    <td>
+                        <button class="${btnClass}" 
+                                onclick="replyInbox('${id}', '${d.username}', '${d.ticketID}')" 
+                                ${btnAttr}>
+                            ${btnText}
+                        </button>
+                    </td>
+                </tr>`;
+
+            // Mobil kartı (Yalnız mobildə görünəcək)
+            mList.innerHTML += `
+                <div class="mobile-card">
+                    <span class="m-header-name">#${d.ticketID} - @${d.username}</span>
+                    <div style="font-size:12px; margin:8px 0; word-break:break-word;">${d.message}</div>
+                    <div class="m-info-row"><span>Tel:</span> <span>${d.phone}</span></div>
+                    <div class="m-footer">
+                        <button class="${btnClass}" style="width:100%"
+                                onclick="replyInbox('${id}', '${d.username}', '${d.ticketID}')" 
+                                ${btnAttr}>
+                            ${btnText}
+                        </button>
+                    </div>
+                </div>`;
+        });
+
+        if(badge) {
+            badge.style.display = unreadCount > 0 ? "inline-block" : "none";
+            badge.innerText = unreadCount;
+        }
+    });
+}
+
+// 2. Müraciətə Cavab Vermə (İstifadəçinin Dashboard-una gedir)
+async function universalSender(username, messageText, ticketID = null) {
+    if (!messageText || messageText.trim() === "") return;
+    try {
+        const now = Date.now();
+        const timeStr = new Date().toLocaleString('az-AZ');
+        const fullMsg = ticketID ? `Ticket #${ticketID} cavabı: ${messageText}` : messageText;
+
+        const msgData = {
+            text: fullMsg,
+            time: now,
+            sender: 'admin',
+            timeFormatted: timeStr,
+            seen: false 
+        };
+
+        // 1. MÜŞTƏRİ PANELİ ÜÇÜN (Dashboard-da görünməsi üçün)
+        const userRef = db.collection("users").doc(username);
+        await userRef.collection("messages").add(msgData);
+        await userRef.set({ hasNotif: true, lastUpdate: now }, { merge: true });
+
+        // 2. ADMIN TARİXÇƏSİ ÜÇÜN (viewHistory funksiyasında görünməsi üçün)
+        const ordersRef = db.collection("orders");
+        const archiveRef = db.collection("completed_orders");
+        
+        // Həm aktiv sifarişlərdə, həm arxivdə axtarırıq
+        const orderQuery = await ordersRef.where("userNickname", "==", username).get();
+        const archiveQuery = await archiveRef.where("userNickname", "==", username).get();
+
+        // Aktiv sifariş varsa oraya yaz
+        if (!orderQuery.empty) {
+            const docId = orderQuery.docs[0].id;
+            await ordersRef.doc(docId).collection("messages").add(msgData);
+            await ordersRef.doc(docId).update({
+                lastNotification: messageText,
+                notifSeen: false,
+                lastUpdate: now
+            });
+        } 
+        
+        // Arxivdə varsa oraya da yaz (Müştəri yerindən göndəriləndə bura düşəcək)
+        if (!archiveQuery.empty) {
+            const docId = archiveQuery.docs[0].id;
+            await archiveRef.doc(docId).collection("messages").add(msgData);
+        }
+
+        return true;
+    } catch (e) {
+        console.error("Göndərmə xətası:", e);
+        return false;
+    }
+}
+
+async function replyInbox(docId, username, tID) {
+    const replyText = prompt(`Ticket #${tID} üçün cavabınız:`);
+    if (replyText) {
+        const success = await universalSender(username, replyText, tID);
+        if (success) {
+            // Bu hissə Inbox bölməsindəki müraciəti arxivləyir (replied statusu verir)
+            await db.collection("inbox").doc(docId).update({ status: "replied" });
+            alert("Müraciət cavablandırıldı!");
+        }
+    }
+}
+
+// Əsas Naviqasiya Funksiyası (Veb və Mobil üçün vahid rəng və başlıq idarəsi)
+function showSection(sect) {
+    // 1. Panelləri idarə et
+    document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
+    const targetPane = document.getElementById(sect + '-pane');
+    if (targetPane) targetPane.classList.add('active');
+
+    // 2. Menyu düymələrinin rəngini (active klassını) idarə et
+    document.querySelectorAll('.nav-item, .m-tab').forEach(i => i.classList.remove('active'));
+    
+    // Veb rəngi
+    const dNav = document.getElementById('d-nav-' + sect);
+    if (dNav) dNav.classList.add('active');
+    
+    // Mobil rəngi
+    const mNav = document.getElementById('m-tab-' + sect);
+    if (mNav) mNav.classList.add('active');
+
+    // 3. Başlığı dəyiş
+    const titles = { 
+        orders: 'Sifarişlər', 
+        customers: 'Müştərilər', 
+        inbox: 'Müraciətlər' 
+    };
+    document.getElementById('page-title').innerText = titles[sect] || 'Panel';
+}
+
+// Bütün sistemləri başlat
+initAdmin();
+initInbox(); // <-- Bu mütləq olmalıdır ki, müraciətlər yüklənsin
     </script>
 </body>
 </html>
