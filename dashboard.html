@@ -351,18 +351,41 @@ function openChat() {
 
     function showPaymentCard() {
         const cardHtml = `
-            <b>Məlumatlar alındı! 🚀</b> Ödənişi edərək sistemi başladın:
-            <div class="card-view">
-                <i class="fa-solid fa-credit-card"></i>
-                <span class="card-code">4127 0000 1234 5678</span>
-                <div style="font-size:10px; opacity:0.8; display:flex; justify-content:space-between">
-                    <span>VELO SERVICES</span><span>12/28</span>
+            <div style="text-align: left;">
+                <b style="color: var(--navy);">Məlumatlar alındı! 🚀</b> 
+                <p style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">Ödənişi edərək qəbzi aşağıya yükləyin:</p>
+                
+                <div class="card-view">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span class="card-code">4127 0000 1234 5678</span>
+                    <div style="font-size:10px; opacity:0.8; display:flex; justify-content:space-between">
+                        <span>VELO SERVICES</span><span>12/28</span>
+                    </div>
                 </div>
-                <button class="pay-done-btn" onclick="finalizeOrder()">ÖDƏNİŞİ ETDİM</button>
+
+                <div style="margin-top:15px; border: 2px dashed var(--border); padding: 15px; border-radius: 15px; text-align: center; background: #fdfdfd;">
+                    <label for="proof-upload" style="cursor:pointer; display: block;">
+                        <i class="fa-solid fa-camera" style="font-size: 20px; color: var(--gold);"></i>
+                        <span id="upload-status" style="display:block; font-size: 11px; margin-top: 5px; font-weight: 700; color: var(--text-light);">QƏBZİ SEÇİN (ŞƏKİL)</span>
+                    </label>
+                    <input type="file" id="proof-upload" accept="image/*" style="display:none" onchange="handleFileUpload(this)">
+                </div>
+
+                <button class="pay-done-btn" id="finalize-btn" disabled 
+                        style="opacity:0.5; cursor:not-allowed; transition: 0.3s; background: #ccc; color: white;" 
+                        onclick="finalizeOrder()">
+                    SİFARİŞİ TAMAMLA
+                </button>
             </div>`;
-        const d = document.createElement('div'); d.className = 'bubble bot'; d.innerHTML = cardHtml;
+        
+        const d = document.createElement('div'); 
+        d.className = 'bubble bot'; 
+        d.innerHTML = cardHtml;
         document.getElementById('chat-msgs').appendChild(d);
         document.getElementById('input-container').classList.add('hidden');
+        
+        const m = document.getElementById('chat-msgs');
+        m.scrollTop = m.scrollHeight;
     }
 
     async function finalizeOrder() {
@@ -449,6 +472,61 @@ function openChat() {
     window.onclick = () => document.getElementById('notif-dropdown').style.display = 'none';
 
     initApp();
+
+let proofBase64 = null; // Şəkli müvəqqəti saxlamaq üçün
+
+    function handleFileUpload(input) {
+        const statusText = document.getElementById('upload-status');
+        const btn = document.getElementById('finalize-btn');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            statusText.innerText = "Yüklənir...";
+            
+            reader.onload = function(e) {
+                proofBase64 = e.target.result; // Şəkli Base64 formatına salırıq
+                
+                // UI Yeniləmə
+                statusText.innerText = "✅ QƏBZ YÜKLƏNDİ!";
+                statusText.style.color = "#10B981"; 
+                
+                // Düyməni aktivləşdiririk
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+                btn.style.background = "#D4AF37"; // Qızılı rəng
+                btn.style.color = "white";
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function finalizeOrder() {
+        if(!proofBase64) {
+            alert("Zəhmət olmasa öncə ödəniş qəbzini yükləyin!");
+            return;
+        }
+
+        const btn = document.getElementById('finalize-btn');
+        btn.innerText = "Göndərilir...";
+        btn.disabled = true;
+
+        collected.orderDate = new Date().toLocaleString('az-AZ');
+        collected.paymentProof = proofBase64; // Şəkil datası bura əlavə olunur
+        collected.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+        try {
+            await db.collection("orders").doc(activeUser).set(collected);
+            alert("Sifarişiniz və ödəniş qəbziniz uğurla göndərildi! 🎉");
+            closeChat();
+        } catch (error) {
+            console.error("Xəta:", error);
+            alert("Sifariş göndərilərkən xəta baş verdi.");
+            btn.innerText = "SİFARİŞİ TAMAMLA";
+            btn.disabled = false;
+        }
+    }
+
 </script>
 </body>
 </html>
