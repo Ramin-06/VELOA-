@@ -174,7 +174,10 @@
     <div id="welcome-ui">
         <div class="promo-card">
             <h2>Xoş gəlmisiniz</h2>
-            <p>Mağazanızı qurmaq üçün AI köməkçisini başladın.</p>
+            <p>Maaşlı işdən yorulmusan?</p>
+            <p>Şəxsi biznesin olsun istəyirsən?</p>
+            <p>Bu sualların cavabı <b>bəli</b>dirsə...</p>
+            <p><b>AI köməkçisi</b>ni başlat, biznesə uğurlu addımını at.</p>
         </div>
         
         <div class="data-panel">
@@ -190,7 +193,7 @@
             </div>
         </div>
 
-        <button class="main-btn" onclick="openChat()">Sifarişə Başla <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i></button>
+        <button class="main-btn" onclick="openChat()">AI köməkçisi <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i></button>
     </div>
 
     <div id="status-ui" class="status-card hidden">
@@ -207,11 +210,11 @@
 
     <div style="margin-top: 20px;">
         <div style="font-size: 11px; color: var(--text-light); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-left: 5px;">
-            Dəstək
+            Dəstək xətti
         </div>
         <button class="main-btn" onclick="window.location.href='support.html'" style="background: #1E293B; box-shadow: 0 10px 20px rgba(30, 41, 59, 0.15); display: flex; align-items: center; justify-content: center; gap: 10px;">
             <i class="fa-solid fa-headset"></i> 
-        Adminə Müraciət Et
+        Adminlə əlaqə
         </button>
     </div>
 
@@ -220,7 +223,7 @@
 <div id="chat-modal">
     <div class="chat-content">
         <div class="chat-header">
-            <span style="font-weight:800; font-size:14px;"><i class="fa-solid fa-robot" style="margin-right:8px; color:var(--gold)"></i> VELO Setup</span>
+            <span style="font-weight:800; font-size:14px;"><i class="fa-solid fa-robot" style="margin-right:8px; color:var(--gold)"></i> VELO AI. köməkçisi</span>
             <div class="close-btn" onclick="closeChat()"><i class="fa-solid fa-xmark"></i></div>
         </div>
         <div class="chat-messages" id="chat-msgs"></div>
@@ -244,7 +247,7 @@
     const db = firebase.firestore();
     const activeUser = localStorage.getItem("activeUser");
 
-    const botQs = ["Salam! 😊 Mağazanızın adı nə olacaq?", "Hansı paketi (Eko, Pro, Business) seçirsiniz?", "Telefon nömrəniz?", "E-poçtunuz?", "Doğum tarixiniz?"];
+    const botQs = ["Salam! 😊 Mağazanızın adı nə olacaq?", "Hansı paketi (Standard, Pro Growth, Business) seçirsiniz?", "Telefon nömrənizi yazın?", "E-poçtunuzu yaza bilərsiniz?", "Doğum tarixinizi qeyd edin"];
     const dKeys = ["shopName", "packageName", "phone", "email", "birthDate"];
     let curQ = 0, collected = { userNickname: activeUser, status: 1 };
     let msgUnsub = null;
@@ -359,7 +362,7 @@ function openChat() {
                     <i class="fa-solid fa-credit-card"></i>
                     <span class="card-code">4127 0000 1234 5678</span>
                     <div style="font-size:10px; opacity:0.8; display:flex; justify-content:space-between">
-                        <span>VELO SERVICES</span><span>12/28</span>
+                        <span>VELO AI.</span><span>12/28</span>
                     </div>
                 </div>
 
