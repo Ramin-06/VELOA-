@@ -118,7 +118,8 @@
     <div id="form-view">
         <div class="header">
             <h2>Müraciət Göndər</h2>
-            <p>Admin panelə birbaşa sorğu göndərin.</p>
+            <p><b>Müraciətiniz Ticket ID ilə cavablandırılacaq</b></p>
+            
         </div>
         
         <div class="form-stack">
@@ -131,7 +132,7 @@
             <textarea id="msgInput" placeholder="Mesajınızı ətraflı qeyd edin..."></textarea>
             
             <button class="elite-btn" id="sendBtn" onclick="submitTicket()">
-                Sorğunu Göndər <i class="fa-solid fa-paper-plane"></i>
+                Göndər <i class="fa-solid fa-paper-plane"></i>
             </button>
             
             <a href="dashboard.html" style="display:block; text-align:center; margin-top:15px; color:#94A3B8; text-decoration:none; font-size:12px; font-weight:700;">
@@ -143,15 +144,15 @@
     <div id="success-view">
         <div style="font-size: 50px; color: #10B981; margin-bottom: 15px;"><i class="fa-solid fa-circle-check"></i></div>
         <h2 style="color:var(--navy); margin:0;">Müraciətiniz Alındı!</h2>
-        <p style="color:#64748B; font-size:14px; margin-top:8px;">Admin bu nömrəyə əsasən cavab verəcək:</p>
         
+        <p style="color:#64748B; font-size:14px; margin-top:8px;">Ticket ID</p>
         <div class="ticket-id-badge" id="ticketIDDisplay">#00000</div>
         
         <p style="font-size:12px; color:#94A3B8; line-height:1.6; padding:0 10px;">
-            Cavab gəldikdə Dashboard-dakı zəng işarəsi qırmızı olacaq.
+            Müraciətinizə cavab gəldikdə İstifadəçi panelindəki zəng ikonu qırmızı olacaq
         </p>
 
-        <a href="dashboard.html" class="back-home-btn">Dashboard-a Qayıt</a>
+        <a href="dashboard.html" class="back-home-btn">ƏSAS SƏHİFƏ</a>
     </div>
 </div>
 
