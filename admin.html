@@ -170,6 +170,12 @@
         </div>
     </div>
 
+    <div id="imageModal" class="modal" onclick="this.style.display='none'">
+        <div style="display:flex; justify-content:center; align-items:center; height:100%;">
+            <img id="modalImg" src="" style="max-width:90%; max-height:80vh; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+        </div>
+    </div>
+
     <div class="sidebar">
         <h2>VELO AI</h2>
         <div class="nav-item active" id="d-nav-orders" onclick="showSection('orders')"><i class="fa-solid fa-list-check" style="margin-right:10px"></i> Sifarişlər</div>
@@ -269,32 +275,103 @@
 }
 
         function initAdmin() {
-            db.collection("orders").onSnapshot(snap => {
-                const dList = document.getElementById("orders-list-desktop");
-                const mList = document.getElementById("orders-list-mobile");
-                
-                dList.innerHTML = ""; mList.innerHTML = "";
-                document.getElementById('count-active').innerText = snap.size;
-                updateTotal();
-                
-                snap.forEach(doc => {
-                    const d = doc.data(); const id = doc.id;
-                    const stMarkup = getStatusMarkup(d);
-                    const options = `<option value="1" ${d.status==1?'selected':''}>Qəbul</option><option value="2" ${d.status==2?'selected':''}>Hazırlıq</option><option value="3" ${d.status==3?'selected':''}>Domain</option><option value="4" ${d.status==4?'selected':''}>Sistem</option><option value="5" ${d.status==5?'selected':''}>Bitir</option>`;
-                   
-                    dList.innerHTML += `<tr><td><b style="color:var(--gold)">@${d.userNickname}</b><span class="u-detail"><i class="fa-solid fa-phone"></i> ${d.phone || 'Yoxdur'}</span><span class="u-detail"><i class="fa-solid fa-envelope"></i> ${d.email || 'Yoxdur'}</span><span class="u-detail"><i class="fa-solid fa-cake-candles"></i> ${d.birthDate || 'Yoxdur'}</span></td><td><b>${d.shopName}</b><br><small>${d.packageType || 'Standart'}</small></td><td><select id="status-d-${id}">${options}</select></td><td>${stMarkup}</td><td style="display:flex; gap:8px"><button class="btn-mini btn-save" onclick="updateStatus('${id}', 'd')">OK</button><button class="btn-mini btn-history" style="background:#fff; border:1px solid var(--border)" onclick="viewHistory('${id}', 'orders')"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button></td></tr>`;
-                    mList.innerHTML += `<div class="mobile-card"><span class="m-header-name">@${d.userNickname}</span><div class="m-info-row"><span>Mağaza:</span> <span>${d.shopName}</span></div><div class="m-info-row"><span>Gmail:</span> <span>${d.email || '---'}</span></div><div class="m-info-row"><span>Doğum T.:</span> <span>${d.birthDate || '---'}</span></div><div style="margin:10px 0;">${stMarkup}</div><div class="m-footer"><select id="status-m-${id}" style="flex:1">${options}</select><button class="btn-mini btn-save" onclick="updateStatus('${id}', 'm')">OK</button><button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button></div></div>`;
-                });
+    db.collection("orders").onSnapshot(snap => {
+        const dList = document.getElementById("orders-list-desktop");
+        const mList = document.getElementById("orders-list-mobile");
+        
+        dList.innerHTML = ""; mList.innerHTML = "";
+        document.getElementById('count-active').innerText = snap.size;
+        updateTotal();
+        
+        snap.forEach(doc => {
+            const d = doc.data(); const id = doc.id;
+            const stMarkup = getStatusMarkup(d);
+            const options = `<option value="1" ${d.status==1?'selected':''}>Qəbul</option><option value="2" ${d.status==2?'selected':''}>Hazırlıq</option><option value="3" ${d.status==3?'selected':''}>Domain</option><option value="4" ${d.status==4?'selected':''}>Sistem</option><option value="5" ${d.status==5?'selected':''}>Bitir</option>`;
+            
+            // Qəbz simvolu (Göz)
+            const proofIcon = d.paymentProof ? 
+                `<i class="fa-solid fa-eye" onclick="openProof('${d.paymentProof}')" style="cursor:pointer; color:var(--gold); margin-left:8px; font-size:16px;" title="Qəbzə bax"></i>` : 
+                `<i class="fa-solid fa-eye-slash" style="color:#ccc; margin-left:8px; font-size:16px;"></i>`;
+
+            // Desktop versiyası
+            dList.innerHTML += `<tr>
+                <td>
+                    <b style="color:var(--gold)">@${d.userNickname}</b>
+                    <span class="u-detail"><i class="fa-solid fa-phone"></i> ${d.phone || 'Yoxdur'}</span>
+                    <span class="u-detail"><i class="fa-solid fa-envelope"></i> ${d.email || 'Yoxdur'}</span>
+                </td>
+                <td><b>${d.shopName}</b> ${proofIcon}<br><small>${d.packageType || 'Standart'}</small></td>
+                <td><select id="status-d-${id}">${options}</select></td>
+                <td>${stMarkup}</td>
+                <td style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn-mini btn-save" onclick="updateStatus('${id}', 'd')">OK</button>
+                    <button class="btn-mini btn-history" style="background:#fff; border:1px solid var(--border)" onclick="viewHistory('${id}', 'orders')"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    <button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button>
+                    <button class="btn-mini" onclick="rejectOrder('${id}')" style="background:#FFF1F1; color:#EF4444; border:1px solid #FFE4E4; width:30px; height:30px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>`;
+
+            // Mobil versiyası
+            mList.innerHTML += `
+                <div class="mobile-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="m-header-name">@${d.userNickname} ${proofIcon}</span>
+                        <button onclick="rejectOrder('${id}')" style="background:none; border:none; color:#EF4444; font-size:16px; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                    <div class="m-info-row"><span>Mağaza:</span> <span>${d.shopName}</span></div>
+                    <div class="m-info-row"><span>Gmail:</span> <span>${d.email || '---'}</span></div>
+                    <div style="margin:10px 0;">${stMarkup}</div>
+                    <div class="m-footer">
+                        <select id="status-m-${id}" style="flex:1">${options}</select>
+                        <button class="btn-mini btn-save" onclick="updateStatus('${id}', 'm')">OK</button>
+                        <button class="btn-mini btn-notif" onclick="sendMsg('${id}', 'orders')"><i class="fa-regular fa-bell"></i></button>
+                    </div>
+                </div>`;
+        });
+    });
+
+    db.collection("completed_orders").onSnapshot(snap => {
+        archiveData = [];
+        snap.forEach(doc => archiveData.push({id: doc.id, ...doc.data()}));
+        renderArchive(archiveData);
+        document.getElementById('count-done').innerText = snap.size;
+        updateTotal();
+    });
+}
+
+
+// Şəkli açmaq üçün funksiya
+function openProof(imgSrc) {
+    if(!imgSrc) return;
+    document.getElementById('modalImg').src = imgSrc;
+    document.getElementById('imageModal').style.display = 'block';
+}
+
+// Sifarişi ləğv etmə funksiyası
+async function rejectOrder(id) {
+    const reason = prompt("İmtina səbəbini qısaca qeyd edin:");
+    if (reason === null) return; 
+
+    if (confirm("Bu sifarişi silmək və istifadəçini məlumatlandırmaq istəyirsiniz?")) {
+        try {
+            // İstifadəçiyə bildiriş göndər
+            await db.collection("users").doc(id).collection("messages").add({
+                text: `❌ Sifariş ləğv edildi. Səbəb: ${reason || 'Ödəniş təsdiqlənmədi'}.`,
+                time: Date.now(),
+                sender: 'admin',
+                seen: false,
+                timeFormatted: new Date().toLocaleString('az-AZ')
             });
 
-            db.collection("completed_orders").onSnapshot(snap => {
-                archiveData = [];
-                snap.forEach(doc => archiveData.push({id: doc.id, ...doc.data()}));
-                renderArchive(archiveData);
-                document.getElementById('count-done').innerText = snap.size;
-                updateTotal();
-            });
+            // Sifarişi bazadan sil
+            await db.collection("orders").doc(id).delete();
+            alert("Sifariş silindi.");
+        } catch (e) {
+            console.error(e);
+            alert("Xəta baş verdi.");
         }
+    }
+}
 
         function renderArchive(data) {
             const dList = document.getElementById("customers-list-desktop");
@@ -549,6 +626,12 @@ function showSection(sect) {
         inbox: 'Müraciətlər' 
     };
     document.getElementById('page-title').innerText = titles[sect] || 'Panel';
+}
+
+function openProof(imgSrc) {
+    if(!imgSrc) return;
+    document.getElementById('modalImg').src = imgSrc;
+    document.getElementById('imageModal').style.display = 'block';
 }
 
 // Bütün sistemləri başlat
