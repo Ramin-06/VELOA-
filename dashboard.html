@@ -256,7 +256,7 @@
     const db = firebase.firestore();
     const activeUser = localStorage.getItem("activeUser");
 
-    const botQs = ["Salam! Mən Velo AI köməkçisiyəm. Mağaza quruluşu zamanı sizdən lazım olan məlumatları toplayıb serverə çatdıracağam.😊 Mağazanızın adı nə olacaq?", "Hansı paketi (Standard, Pro Growth, Business) seçirsiniz?", "Telefon nömrənizi yazın", "E-poçtunuzu yaza bilərsiniz?", "Doğum tarixinizi qeyd edin"];
+    const botQs = ["Salam! Mən Velo AI köməkçisiyəm. Mağaza quruluşu zamanı sizdən lazım olan məlumatları toplayıb serverə çatdıracağam.😊 Zəhmət olmasa mağazanızın adını qeyd edin", "Hansı paketi (Standard, Pro Growth, Business) seçirsiniz?", "Telefon nömrənizi yazın", "E-poçtunuzu yaza bilərsiniz?", "Doğum tarixinizi qeyd edin"];
     const dKeys = ["shopName", "packageName", "phone", "email", "birthDate"];
     let curQ = 0, collected = { userNickname: activeUser, status: 1 };
     let msgUnsub = null;
